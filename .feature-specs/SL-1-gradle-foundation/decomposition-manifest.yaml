@@ -3,26 +3,24 @@ contract_version: "0.5"
 issue_key: "SL-1"
 feature_name: "gradle-foundation"
 parent_spec_path: ".feature-specs/SL-1-gradle-foundation/spec.md"
-status: "blocked"
+status: "complete"
 execution_model: "same_branch_commit_per_subtask"
 base_branch: "main"
 feature_branch: "feat/SL-1-gradle-foundation"
 stack_branches: []
 current_subtask_intent:
-  subtask_id: 1
-  action: "blocked"
+  subtask_id: 0
+  action: "complete"
 subtasks:
 - id: 1
   name: "Implement the Gradle foundation"
   spec_path: ".feature-specs/SL-1-gradle-foundation/spec_subtask_1_gradle_foundation.md"
-  status: "blocked"
+  status: "complete"
   branch: null
   commit_sha: null
-  workflow_id: null
-  blocked_reason: "git checkout --merge -b feat/SL-1-gradle-foundation main failed\
-    \ with exit code 128: fatal: 'main' is not a commit and a branch 'feat/SL-1-gradle-foundation'\
-    \ cannot be created from it"
-  last_resumable_step: "create_branch"
+  workflow_id: "wftr-20260927-105132-n0b4"
+  blocked_reason: null
+  last_resumable_step: "commit_push"
   linear_issue_id: null
   finalizing_agent_id: null
   participating_agent_ids: []

@@ -1,6 +1,6 @@
 # SL-1 subtask 1: Implement the Gradle foundation
 
-Status: pending.
+Status: implementation complete; runtime validation is pending.
 
 ## Scope
 
@@ -41,4 +41,4 @@ Follow the parent's validation strategy. Use TestKit and real compile/test task 
 
 ## Next path
 
-Complete this subtask before planning Compose Desktop setup. The prepared workflow entry point is `skill-bill goal SL-1`.
+Complete runtime validation for this subtask before planning Compose Desktop setup.

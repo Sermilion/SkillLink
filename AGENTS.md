@@ -36,7 +36,7 @@ Skill Bill's architecture principles inform this project. Its workflow engine, p
 
 ## Architecture requirements
 
-Follow [the architecture](docs/ARCHITECTURE.md), including its design principles and dependency graph. The target modules are `domain`, `application`, `infrastructure`, `desktop`, and `app`. They are planned boundaries, not existing code.
+Follow [the architecture](docs/ARCHITECTURE.md), including its design principles and dependency graph. The target modules are `domain`, `application`, `infrastructure`, `desktop`, and `app`. The modules exist; `app` owns the desktop entry point and packaging, and `desktop` owns the initial library shell.
 
 - Domain rules have no UI or IO dependencies. Application use cases own policy and ports; adapters implement those ports.
 - `app` is the sole composition root. Desktop code calls application operations and never manipulates files, links, or database entities directly.
@@ -58,7 +58,7 @@ Run checks appropriate to the change. Document canonical build and verification 
 
 ## Enforcement status
 
-The repository currently has documentation and no implemented build or architecture guards. The architecture describes the target; its rules apply in review now.
+The Gradle foundation enforces JVM conventions, quality checks, and direct production project-dependency rules. It does not scan source imports, comments, wire keys, or package and file limits. The architecture describes the target; unenforced rules still apply in review.
 
 As guards are added, maintain one inventory pairing each mechanically enforced rule with its proving test. Keep review-only requirements separate. Never expand exemptions, suppressions, or baselines to accommodate a new violation.
 

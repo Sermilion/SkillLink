@@ -1,0 +1,13 @@
+# Gradle and Kotlin generated output
+.gradle/
+.kotlin/
+**/build/
+
+# IDE state
+.idea/
+*.iml
+.vscode/
+
+# Local operating system metadata
+.DS_Store
+Thumbs.db

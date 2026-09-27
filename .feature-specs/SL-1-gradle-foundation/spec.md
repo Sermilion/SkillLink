@@ -1,6 +1,6 @@
 # SL-1: Gradle project and build conventions
 
-Status: prepared specification. Implementation has not started.
+Status: implementation complete; runtime validation is pending.
 Mode: `single_spec`, with one executable subtask.
 
 ## Outcome
@@ -158,8 +158,8 @@ Check the final build in a temporary standalone checkout without access to the r
 
 One subtask delivers the build foundation as a coherent change. It has no prior implementation dependency. Splitting wrapper, conventions, and consumers would leave intermediate work without a useful project build.
 
-See [the executable subtask](spec_subtask_1_gradle_foundation.md). The manifest records pending work; preparing these files does not start implementation or create a commit.
+See [the executable subtask](spec_subtask_1_gradle_foundation.md) and [implementation notes](implementation-notes.md). Runtime validation remains outstanding.
 
 ## Next path
 
-Implement the Gradle foundation through `skill-bill goal SL-1` when starting the governed workflow. Later work can add Compose Desktop and its packaging conventions to `desktop` and `app` against this foundation.
+Complete runtime validation for the Gradle foundation before adding Compose Desktop and packaging conventions to `desktop` and `app`.

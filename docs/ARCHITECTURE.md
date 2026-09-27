@@ -1,6 +1,6 @@
 # SkillLink architecture
 
-Status: target architecture for implementation. The repository currently contains documentation; the modules and checks below do not exist yet.
+Status: the five Gradle modules, build checks, Compose desktop shell, and native packaging exist. Application operations and persistence remain planned. The dependency guard checks direct production project dependencies only.
 
 Read [the product idea](idea.md) first. [Code principles](code-principles.md) define Kotlin and build conventions. [Observability policy](observability-policy.md) defines failure reporting. These documents adapt Skill Bill's principles to SkillLink's scope and are self-contained.
 
@@ -184,6 +184,8 @@ Trash and undo remain optional follow-on work. They require owned-content moves,
 
 Use Kotlin and Gradle with Compose Multiplatform targeting desktop JVM. Share toolchain and test configuration through convention plugins when modules require it. Choose dependency versions during implementation.
 
+`app` owns the Compose application entry point and native distribution settings. `desktop` renders the Material 3 library shell and has no IO or application mutations yet. Compose 1.7.3 and the Kotlin 2.0.21 Compose compiler plugin apply only to those two modules. Google Maven supplies their AndroidX dependencies.
+
 Package DMG for macOS, MSI for Windows, and DEB/RPM for Linux through Compose Desktop native distributions. Build and exercise platform packages on their respective operating systems. Verify that updates preserve `~/.skilllink/` and that uninstall behavior does not silently erase managed skills.
 
 Keep build output, generated database code, installers, staging directories, and local user data out of version control. Publish documented build and test commands when tasks exist.
@@ -194,7 +196,7 @@ Every test should name the realistic regression it catches. Prioritize real file
 
 Required evidence includes case-insensitive collision rejection, preservation of originals after failed copying, rollback after partial linking, cleanup after committed import, rejection of replaced destinations, and unchanged unrelated skills. UI tests protect interaction and lifecycle behavior rather than screenshots of incidental layout.
 
-No automated architecture guards exist yet. At implementation, maintain one `PrincipleEnforcementInventory` pairing each enforced rule with its proving test. Keep review-only requirements separate. Planned guards should check module dependencies, forbidden framework imports, Kotlin comments, inline qualified names, package/file limits, and governed wire-key ownership.
+The [Principle Enforcement Inventory](PrincipleEnforcementInventory.md) pairs implemented checks with their proving fixtures and lists review-only rules separately. The dependency guard checks direct project declarations on production compile and runtime classpaths. It does not inspect framework imports, Kotlin comments, inline qualified names, package/file limits, or wire-key ownership.
 
 Source scans must test both allowed and rejected inputs, including newly introduced undeclared keys. They must not claim coverage outside their configured source boundaries. Never grow exemptions or baselines to make new violations pass.
 
