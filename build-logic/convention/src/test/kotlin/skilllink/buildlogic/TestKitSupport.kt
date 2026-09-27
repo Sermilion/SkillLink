@@ -10,7 +10,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Properties
 
-internal val productionModules = listOf("domain", "application", "infrastructure", "desktop", "app")
+internal val productionModules = listOf("domain", "application", "infrastructure", "desktop", "cli", "app")
 
 internal fun Path.write(
     relative: String,

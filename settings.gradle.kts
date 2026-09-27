@@ -18,4 +18,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "skilllink"
 
-include("domain", "application", "infrastructure", "desktop", "app")
+include("domain", "application", "infrastructure", "desktop", "cli", "app")

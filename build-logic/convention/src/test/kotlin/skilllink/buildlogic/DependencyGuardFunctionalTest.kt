@@ -51,7 +51,8 @@ class DependencyGuardFunctionalTest {
         result.assertContains("application:implementation=[:domain]")
         result.assertContains("infrastructure:implementation=[:application, :domain]")
         result.assertContains("desktop:implementation=[:application, :domain]")
-        result.assertContains("app:implementation=[:application, :desktop, :infrastructure]")
+        result.assertContains("cli:implementation=[:application, :domain]")
+        result.assertContains("app:implementation=[:application, :cli, :desktop, :infrastructure]")
     }
 
     @ParameterizedTest
@@ -61,6 +62,7 @@ class DependencyGuardFunctionalTest {
         "desktop, infrastructure, compileOnly",
         "desktop, infrastructure, runtimeOnly",
         "desktop, infrastructure, customProduction",
+        "cli, infrastructure, implementation",
     )
     fun rejectsForbiddenDirectEdgesAcrossProductionConfigurations(
         source: String,

@@ -6,4 +6,5 @@ plugins {
 dependencies {
     implementation(project(":application"))
     implementation(project(":domain"))
+    implementation(libs.sqlite.jdbc)
 }

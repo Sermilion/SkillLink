@@ -85,7 +85,9 @@ Trash and undo are nice to have, rather than first-release blockers. Retention, 
 
 The first release uses a CLI to import an explicitly selected local skill, list managed skills and their canonical paths, manage per-agent links, and report installation condition. Commands must report conflicts, blocked recovery, pending cleanup, and restart reminders. Unlinking preserves the canonical source.
 
-Command names, arguments, output formats, exit codes, and CLI distribution still need design. An integrated editor is deferred to the desktop stage; users can identify the canonical path to edit with their own tools.
+The executable is `skill-link`. Installation takes a path to a skill file and an explicit selection of agents. The list shows numbered rows, but enable, disable, and remove take the skill name. Row numbers are display aids and cannot select a skill for mutation.
+
+[SL-2](../.feature-specs/SL-2-cli-skill-installation/spec.md) specifies the command syntax, output, exit codes, distribution, and recovery requirements. Its proposed defaults import the selected `SKILL.md` with its containing bundle and move removed skills to local trash. Those source and removal choices remain design defaults for review. An integrated editor is deferred to the desktop stage; users can identify the canonical path to edit with their own tools.
 
 ### Later desktop interface
 
@@ -230,7 +232,7 @@ The historical reference is the parent of removal commit `211941b7a`. It contain
 
 ## Open questions
 
-- What command syntax, output formats, exit codes, and distribution should the CLI provide?
+- Should SL-2's source-bundle and recoverable-removal defaults become the first-release contract?
 - What evidence can each agent provide for usage tracking, and what counts as a use?
 - Which collection controls and retention policy should local activity data use?
 - How long should trash retain skills, and how should permanent deletion and conflicting restores work?
