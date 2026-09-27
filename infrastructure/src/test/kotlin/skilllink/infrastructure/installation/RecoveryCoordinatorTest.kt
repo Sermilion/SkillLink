@@ -3,6 +3,7 @@ package skilllink.infrastructure.installation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import skilllink.application.installation.RecoveryCoordinator
@@ -46,7 +47,7 @@ class RecoveryCoordinatorTest {
         Files.createDirectories(staging)
         Files.createDirectories(canonical)
         Files.createDirectories(destination.parent)
-        Files.createSymbolicLink(destination, canonical)
+        createSymlinkOrSkip(destination, canonical)
         store.beginInstall(
             "op",
             skillId,
@@ -172,7 +173,7 @@ class RecoveryCoordinatorTest {
                 "claude,Disabled,Missing,$destination",
             ),
         )
-        Files.createSymbolicLink(destination, canonical)
+        createSymlinkOrSkip(destination, canonical)
 
         val outcome = recovery(store, filesystem).recoverIncomplete()
 
@@ -205,7 +206,7 @@ class RecoveryCoordinatorTest {
                 "claude,Disabled,Missing,$claude|cursor,Disabled,Missing,$cursor",
             ),
         )
-        Files.createSymbolicLink(claude, canonical)
+        createSymlinkOrSkip(claude, canonical)
         Files.writeString(cursor, "foreign")
 
         val outcome = recovery(store, filesystem).recoverIncomplete()
@@ -238,7 +239,7 @@ class RecoveryCoordinatorTest {
                 "claude,Enabled,Linked,$destination",
             ),
         )
-        Files.createSymbolicLink(destination, canonical)
+        createSymlinkOrSkip(destination, canonical)
         Files.delete(destination)
         Files.writeString(destination, "foreign")
 
@@ -260,7 +261,7 @@ class RecoveryCoordinatorTest {
         val destination = registry.destinationFor(AgentId.Claude).root.resolve("managed")
         Files.createDirectories(canonical)
         Files.createDirectories(destination.parent)
-        Files.createSymbolicLink(destination, canonical)
+        createSymlinkOrSkip(destination, canonical)
         store.beginManagement(
             "committed-management",
             OperationKind.Enable,
@@ -298,7 +299,7 @@ class RecoveryCoordinatorTest {
         Files.createDirectories(canonical)
         Files.writeString(canonical.resolve("SKILL.md"), "content")
         Files.createDirectories(destination.parent)
-        Files.createSymbolicLink(destination, canonical)
+        createSymlinkOrSkip(destination, canonical)
         store.beginManagement(
             "remove-op",
             OperationKind.Remove,
@@ -382,4 +383,12 @@ private class NoopDiagnostics : DiagnosticsPort {
         secondaryCode: String,
         detail: String,
     ) = Unit
+}
+
+private fun createSymlinkOrSkip(
+    link: Path,
+    target: Path,
+) {
+    val created = runCatching { Files.createSymbolicLink(link, target) }.isSuccess
+    Assumptions.assumeTrue(created, "symlinks unsupported on this filesystem")
 }

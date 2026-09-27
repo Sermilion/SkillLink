@@ -42,6 +42,7 @@ class CliRendererTest {
 
     @Test
     fun rendersDeterministicRowsWithCanonicalAndObservedInstallationState() {
+        val canonicalPath = Path.of("/library/alpha")
         val rendered =
             CliRenderer.renderList(
                 ListSkillsOutcome.Rows(
@@ -50,7 +51,7 @@ class CliRendererTest {
                             SkillId("one"),
                             "alpha",
                             NameComparisonKey("alpha"),
-                            Path.of("/library/alpha"),
+                            canonicalPath,
                             listOf(
                                 AgentInstallationSnapshot(
                                     AgentId.Cursor,
@@ -73,7 +74,7 @@ class CliRendererTest {
 
         assertEquals(CliExitCodes.SUCCESS, rendered.exitCode)
         assertTrue(rendered.stdout.indexOf("1. alpha") < rendered.stdout.indexOf("2. beta"))
-        assertTrue(rendered.stdout.contains("/library/alpha"))
+        assertTrue(rendered.stdout.contains(canonicalPath.toString()))
         assertTrue(rendered.stdout.contains("cursor: desired=enabled observed=foreign"))
     }
 
@@ -111,20 +112,22 @@ class CliRendererTest {
         val integrity = CliRenderer.renderEnable(EnableSkillOutcome.Failed.IntegrityFailure)
         val conflict = CliRenderer.renderDisable(DisableSkillOutcome.Failed.DestinationConflict)
         val blocked = CliRenderer.renderRemove(RemoveSkillOutcome.Failed.BlockedRecovery)
+        val trashPath = Path.of("/home/user/.skilllink/trash/op")
         val completed =
             CliRenderer.renderRemove(
                 RemoveSkillOutcome.Completed(
                     skillName = "demo",
-                    trashPath = Path.of("/home/user/.skilllink/trash/op"),
+                    trashPath = trashPath,
                     formerAgents = setOf(AgentId.Claude),
                     cleanupPending = false,
                 ),
             )
+        val pendingTrashPath = Path.of("/home/user/.skilllink/trash/op")
         val pending =
             CliRenderer.renderRemove(
                 RemoveSkillOutcome.Failed.CleanupPendingCommitted(
                     skillName = "demo",
-                    trashPath = Path.of("/home/user/.skilllink/trash/op"),
+                    trashPath = pendingTrashPath,
                 ),
             )
 
@@ -139,7 +142,7 @@ class CliRendererTest {
         assertEquals(CliExitCodes.CONFLICT, blocked.exitCode)
         assertTrue(blocked.stderr.contains("blocked"))
         assertEquals(CliExitCodes.SUCCESS, completed.exitCode)
-        assertTrue(completed.stdout.contains("/home/user/.skilllink/trash/op"))
+        assertTrue(completed.stdout.contains(trashPath.toString()))
         assertTrue(completed.stdout.contains("Restart affected agents"))
         assertEquals(CliExitCodes.CLEANUP_PENDING, pending.exitCode)
         assertTrue(pending.stderr.contains("Retained at"))
