@@ -36,7 +36,7 @@ Skill Bill's architecture principles inform this project. Its workflow engine, p
 
 ## Architecture requirements
 
-Follow [the architecture](docs/ARCHITECTURE.md), including its design principles and dependency graph. The target modules are `domain`, `application`, `infrastructure`, `desktop`, and `app`. They are planned boundaries, not existing code.
+Follow [the architecture](docs/ARCHITECTURE.md), including its design principles and dependency graph. The target modules are `domain`, `application`, `infrastructure`, `desktop`, and `app`. The modules exist; `app` owns the desktop entry point and packaging, and `desktop` owns the initial library shell.
 
 - Domain rules have no UI or IO dependencies. Application use cases own policy and ports; adapters implement those ports.
 - `app` is the sole composition root. Desktop code calls application operations and never manipulates files, links, or database entities directly.

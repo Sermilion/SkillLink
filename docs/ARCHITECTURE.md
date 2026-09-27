@@ -184,6 +184,8 @@ Trash and undo remain optional follow-on work. They require owned-content moves,
 
 Use Kotlin and Gradle with Compose Multiplatform targeting desktop JVM. Share toolchain and test configuration through convention plugins when modules require it. Choose dependency versions during implementation.
 
+`app` owns the Compose application entry point and native distribution settings. `desktop` renders the Material 3 library shell and has no IO or application mutations yet. Compose 1.7.3 and the Kotlin 2.0.21 Compose compiler plugin apply only to those two modules. Google Maven supplies their AndroidX dependencies.
+
 Package DMG for macOS, MSI for Windows, and DEB/RPM for Linux through Compose Desktop native distributions. Build and exercise platform packages on their respective operating systems. Verify that updates preserve `~/.skilllink/` and that uninstall behavior does not silently erase managed skills.
 
 Keep build output, generated database code, installers, staging directories, and local user data out of version control. Publish documented build and test commands when tasks exist.
