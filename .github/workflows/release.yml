@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.0.0). Uses the current ref when empty.'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            os: ubuntu-24.04
+          - platform: macos-arm64
+            os: macos-14
+          - platform: macos-x64
+            os: macos-13
+          - platform: windows-x64
+            os: windows-2022
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Build CLI distribution
+        shell: bash
+        run: ./gradlew :app:skillLinkCliDistribution --stacktrace
+
+      - name: Package archive
+        shell: bash
+        run: |
+          cd app/build
+          archive_name="skill-link-cli-${{ matrix.platform }}"
+          tar -czf "${archive_name}.tar.gz" -C skill-link-cli .
+          if command -v shasum >/dev/null 2>&1; then
+            shasum -a 256 "${archive_name}.tar.gz" > "${archive_name}.tar.gz.sha256"
+          else
+            sha256sum "${archive_name}.tar.gz" > "${archive_name}.tar.gz.sha256"
+          fi
+
+      - name: Upload archive
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: skill-link-cli-${{ matrix.platform }}
+          path: |
+            app/build/skill-link-cli-${{ matrix.platform }}.tar.gz
+            app/build/skill-link-cli-${{ matrix.platform }}.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-24.04
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          gh release create "$tag" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$tag" \
+            --generate-notes \
+            artifacts/*

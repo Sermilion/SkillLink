@@ -38,6 +38,42 @@ Unlinking a skill preserves its source. Usage tracking is optional, and missing 
 
 The existing desktop shell opens a two-panel library window and remains groundwork for a later release. The `skill-link` CLI implements install, list, enable, disable, remove, help, and version. Management commands take skill names (case-insensitive), not list row numbers. Removed bundles remain under `~/.skilllink/trash/`; restore and permanent deletion are not available. Desktop editing is not implemented yet.
 
+## Install
+
+The installer downloads a prebuilt CLI archive from the latest GitHub release. No git, Gradle, or build-time JDK is needed. A JDK 21+ is required at runtime to run `skill-link`.
+
+Piped install (recommended):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Sermilion/SkillLink/main/install.sh | bash
+```
+
+Specific release:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Sermilion/SkillLink/main/install.sh | bash -s -- --release v1.0.0
+```
+
+From a local checkout (builds from source, requires JDK 21 and git):
+
+```sh
+./install.sh --local
+```
+
+| Flag | Effect |
+| --- | --- |
+| `--from-source` | Clone and build from source instead of downloading a prebuilt archive. |
+| `--local` | Build from this checkout (implies `--from-source`). |
+| `--branch BRANCH` | Clone a specific branch for `--from-source` (default: main). |
+| `--release TAG` | Use a specific release tag for prebuilt or source installs. |
+| `--install-dir DIR` | Override the distribution directory (default: `~/.skilllink/app`). |
+| `--bin-dir DIR` | Override the launcher directory (default: `~/.local/bin`). |
+| `--skip-launcher` | Install the distribution without creating launcher symlinks. |
+
+If no prebuilt archive is available for the current platform, the installer falls back to `--from-source` automatically. After installation, verify with `skill-link --version`.
+
+The [release workflow](.github/workflows/release.yml) builds CLI archives for linux-x64, macos-arm64, macos-x64, and windows-x64 on each tagged release.
+
 Run the CLI through `./gradlew :app:runSkillLinkCli --args="--help"`. Build launcher scripts with `./gradlew :app:skillLinkCliDistribution` (outputs under `app/build/skill-link-cli/`). JDK 21 is required.
 
 ## Build setup
