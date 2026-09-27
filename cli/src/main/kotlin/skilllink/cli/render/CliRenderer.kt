@@ -16,7 +16,7 @@ data class RenderedCliOutcome(
 )
 
 object CliRenderer {
-  private const val VERSION = "0.1.0-SNAPSHOT"
+  private val VERSION = System.getProperty("skilllink.version", "0.1.0-SNAPSHOT")
 
   fun renderParseFailure(failure: CliParseOutcome.Failed): RenderedCliOutcome =
     RenderedCliOutcome(

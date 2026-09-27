@@ -18,6 +18,8 @@ dependencies {
   implementation(project(":application"))
 }
 
+val skillLinkVersion = providers.gradleProperty("skilllinkVersion").orElse("0.1.0-SNAPSHOT").get()
+
 val skillLinkCliMainClass = "skilllink.app.SkillLinkCliMainKt"
 
 tasks.register<JavaExec>("runSkillLinkCli") {
@@ -25,6 +27,7 @@ tasks.register<JavaExec>("runSkillLinkCli") {
   description = "Run the skill-link CLI entry point"
   classpath = sourceSets["main"].runtimeClasspath
   mainClass.set(skillLinkCliMainClass)
+  systemProperty("skilllink.version", skillLinkVersion)
 }
 
 tasks.register<CreateStartScripts>("skillLinkCliStartScripts") {
@@ -39,7 +42,7 @@ tasks.register<CreateStartScripts>("skillLinkCliStartScripts") {
       .dir("skill-link-cli/bin")
       .get()
       .asFile
-  defaultJvmOpts = listOf("-Xmx256m")
+  defaultJvmOpts = listOf("-Xmx256m", "-Dskilllink.version=$skillLinkVersion")
 }
 
 tasks.register<Copy>("skillLinkCliDistribution") {

@@ -1,10 +1,8 @@
 name: Installers
 
 on:
-  pull_request:
   push:
-    branches: [main]
-  workflow_dispatch:
+    tags: ['v*.*.*']
 
 permissions:
   contents: read
@@ -63,7 +61,7 @@ jobs:
 
   macos:
     name: Package macOS ARM64
-    if: github.repository == 'Sermilion/SkillLink' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.repository == 'Sermilion/SkillLink' && startsWith(github.ref, 'refs/tags/v')
     runs-on: [self-hosted, macOS, ARM64, skilllink]
     timeout-minutes: 45
     concurrency:

@@ -24,12 +24,13 @@ Detekt 1.23.8 embeds Kotlin 2.0.21 for analysis. Passing checks on today's sourc
 
 ## CI actions
 
-Both workflows retain commit pins:
+All workflows retain commit pins:
 
 | Action | Release | Commit |
 | --- | --- | --- |
 | `actions/checkout` | [v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1) | `3d3c42e5aac5ba805825da76410c181273ba90b1` |
 | `actions/setup-java` | [v6.0.1](https://github.com/actions/setup-java/releases/tag/v6.0.1) | `de7274f081f381c8f8158605e0321c36c376e2e6` |
+| `actions/download-artifact` | [v4.1.8](https://github.com/actions/download-artifact/releases/tag/v4.1.8) | `fa0a91b85d4f404e444e00e005971372dc801d16` |
 | `actions/upload-artifact` | [v7.0.1](https://github.com/actions/upload-artifact/releases/tag/v7.0.1) | `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` |
 | `gradle/actions/setup-gradle` | [v6.3.0](https://github.com/gradle/actions/releases/tag/v6.3.0) | `9c971963bec38e04b3d30dcc455b5382be2fdbfb` |
 
