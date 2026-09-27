@@ -11,7 +11,7 @@ Read the parent spec and project-required documents before changing files. The p
 ## Implementation sequence
 
 1. Choose and record compatible stable dependency versions and JDK 21 setup. Add the verified wrapper, root settings, catalog, and included-build settings.
-2. Implement `skilllink.jvm-library` and `skilllink.quality` in `build-logic/convention`, including the convention project's own quality checks and plugin validation.
+2. Implement `skilllink.jvm-library` and `skilllink.quality` in `../../../build-logic/convention`, including the convention project's own quality checks and plugin validation.
 3. Add the five module build files and explicit dependency graph. Wire root `check` and `build` to include the included build and all required module tasks.
 4. Add the dependency guard and behavioral fixtures for conventions, failure propagation, and forbidden dependency edges.
 5. Update README, architecture status, agent instructions, enforcement inventory, and ignore rules. Record chosen versions, official compatibility sources, and any observed build limitations in `implementation-notes.md` beside this spec.

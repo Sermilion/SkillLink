@@ -25,46 +25,46 @@ private const val PANEL_WHITE = 0xFFFFFFFF
 private const val SIDEBAR_BLUE = 0xFFE7EFF3
 private const val INK_BLUE = 0xFF20343E
 private val libraryColors =
-    lightColorScheme(
-        primary = Color(LIBRARY_BLUE),
-        background = Color(CANVAS_GREY),
-        surface = Color(PANEL_WHITE),
-        surfaceVariant = Color(SIDEBAR_BLUE),
-        onSurface = Color(INK_BLUE),
-    )
+  lightColorScheme(
+    primary = Color(LIBRARY_BLUE),
+    background = Color(CANVAS_GREY),
+    surface = Color(PANEL_WHITE),
+    surfaceVariant = Color(SIDEBAR_BLUE),
+    onSurface = Color(INK_BLUE),
+  )
 
 @Composable
 fun SkillLinkApp() {
-    MaterialTheme(colorScheme = libraryColors) {
-        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Row {
-                LibrarySidebar()
-                Column(
-                    modifier = Modifier.padding(panelPadding),
-                    verticalArrangement = Arrangement.spacedBy(contentSpacing),
-                ) {
-                    Text("One library. Every agent.", style = MaterialTheme.typography.headlineLarge)
-                    Text("Keep a shared copy of each skill for Claude, Codex, Junie, and Cursor.")
-                    Text("Skill import and editing are coming in a future version.")
-                }
-            }
+  MaterialTheme(colorScheme = libraryColors) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      Row {
+        LibrarySidebar()
+        Column(
+          modifier = Modifier.padding(panelPadding),
+          verticalArrangement = Arrangement.spacedBy(contentSpacing),
+        ) {
+          Text("One library. Every agent.", style = MaterialTheme.typography.headlineLarge)
+          Text("Keep a shared copy of each skill for Claude, Codex, Junie, and Cursor.")
+          Text("Skill import and editing are coming in a future version.")
         }
+      }
     }
+  }
 }
 
 @Composable
 private fun LibrarySidebar() {
-    Surface(
-        modifier = Modifier.width(sidebarWidth).fillMaxHeight(),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+  Surface(
+    modifier = Modifier.width(sidebarWidth).fillMaxHeight(),
+    color = MaterialTheme.colorScheme.surfaceVariant,
+  ) {
+    Column(
+      modifier = Modifier.padding(panelPadding),
+      verticalArrangement = Arrangement.spacedBy(contentSpacing),
     ) {
-        Column(
-            modifier = Modifier.padding(panelPadding),
-            verticalArrangement = Arrangement.spacedBy(contentSpacing),
-        ) {
-            Text("SkillLink", style = MaterialTheme.typography.headlineMedium)
-            Text("Your skills", style = MaterialTheme.typography.titleMedium)
-            Text("No managed skills yet.")
-        }
+      Text("SkillLink", style = MaterialTheme.typography.headlineMedium)
+      Text("Your skills", style = MaterialTheme.typography.titleMedium)
+      Text("No managed skills yet.")
     }
+  }
 }

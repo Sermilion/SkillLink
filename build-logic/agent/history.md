@@ -1,3 +1,12 @@
+## [2026-09-27] SL-2 CLI skill installation and listing
+Areas: app, application, build-logic, cli, docs, domain, infrastructure, gradle
+
+- Added the `skill-link` CLI entry point and distribution tasks for install, list, help, and version, with lazy runtime wiring so help and version do not initialize SQLite.
+- Added domain rules for skill names, front matter, and source bundles, plus application install, listing, and recovery operations behind ports.
+- Added SQLite catalog and journal persistence, native filesystem and agent adapters, writer locking, diagnostics, CLI parsing and rendering, and dependency-guard coverage for the new module graph.
+- Documented the ownership and recovery protocol and updated the architecture and enforcement inventory. Management commands and later desktop behavior remain outside this subtask.
+Feature flag: N/A
+
 ## [2026-09-27] SL-1 Gradle foundation
 Areas: build-logic, root Gradle build, gradle, config/detekt, domain, application, infrastructure, desktop, app, docs
 

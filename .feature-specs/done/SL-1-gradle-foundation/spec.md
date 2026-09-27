@@ -5,7 +5,7 @@ Mode: `single_spec`, with one executable subtask.
 
 ## Outcome
 
-Create SkillLink's Gradle project at the repository root. Start with an included `build-logic` build that owns shared JVM and quality conventions, then apply those conventions to the five modules defined in `docs/ARCHITECTURE.md`.
+Create SkillLink's Gradle project at the repository root. Start with an included `build-logic` build that owns shared JVM and quality conventions, then apply those conventions to the five modules defined in `../../../docs/ARCHITECTURE.md`.
 
 A contributor should be able to use the checked-in wrapper to compile the project and check both application modules and build logic from a standalone checkout. No sibling Skill Bill checkout or installed Skill Bill runtime may be required by the build.
 
@@ -22,11 +22,11 @@ The five module builds establish boundaries for later features. Do not add place
 
 ## Required reading
 
-- `AGENTS.md`
-- `docs/idea.md`
-- `docs/ARCHITECTURE.md`
-- `docs/code-principles.md`
-- `docs/observability-policy.md`
+- `../../../AGENTS.md`
+- `../../../docs/idea.md`
+- `../../../docs/ARCHITECTURE.md`
+- `../../../docs/code-principles.md`
+- `../../../docs/observability-policy.md`
 
 ## Reference and adaptation
 
@@ -117,7 +117,7 @@ Pair this guard with its proving test in one `PrincipleEnforcementInventory`. Do
 ## Acceptance criteria
 
 1. The repository contains a root Gradle build, checked-in wrapper with distribution checksum, shared catalog, and explicit settings for the five target modules and the included `build-logic` build.
-2. `build-logic/convention` registers `skilllink.jvm-library` and `skilllink.quality`, and their implementations own the shared JVM, test, formatting, and analysis settings described above.
+2. `../../../build-logic/convention` registers `skilllink.jvm-library` and `skilllink.quality`, and their implementations own the shared JVM, test, formatting, and analysis settings described above.
 3. Module build files declare only the permitted production project dependencies and apply their conventions explicitly without filesystem-based capability detection.
 4. Root lifecycle task wiring includes module checks, included-build tests, plugin validation, and quality checks covering authored Kotlin and Gradle scripts. Root `build` includes those checks and module builds.
 5. Behavioral test fixtures demonstrate JVM target alignment, warnings-as-errors rejection, JUnit discovery and failing-test propagation, quality failure propagation, and included-build failure propagation to root `check`.

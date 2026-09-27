@@ -1,4 +1,4 @@
 plugins {
-    id("skilllink.jvm-library")
-    id("skilllink.quality")
+  id("skilllink.jvm-library")
+  id("skilllink.quality")
 }

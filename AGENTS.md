@@ -16,7 +16,7 @@ These documents own their respective rules. This file is the entry point and pro
 
 SkillLink manages one canonical copy of a skill and installs it into selected agents through symlinks. It starts as a CLI for Windows, Linux, and macOS, using the Kotlin/JVM and Gradle foundation used by Skill Bill.
 
-The first release focuses on CLI import, managed-skill listing, canonical paths, per-agent links, and installation status. Command syntax and CLI distribution still need design. The later desktop UI has a sidebar of managed skills and a main panel for viewing and editing the selected skill. Use Compose Multiplatform for desktop JVM and the Material 3 approach from Skill Bill's removed desktop app. Package DMG, MSI, DEB, and RPM installers for that later desktop release. Use local SQLite storage, with the historical desktop Room integration as the persistence reference. Do not treat an implementation proposal as an accepted product decision.
+The first release focuses on CLI import, managed-skill listing, enable, disable, remove, canonical paths, per-agent links, and installation status. The `skill-link` launch tasks cover install, list, enable, disable, remove, help, and version with name-based management semantics (never list row numbers). The later desktop UI has a sidebar of managed skills and a main panel for viewing and editing the selected skill. Use Compose Multiplatform for desktop JVM and the Material 3 approach from Skill Bill's removed desktop app. Package DMG, MSI, DEB, and RPM installers for that later desktop release. Use local SQLite storage, with the historical desktop Room integration as the persistence reference. Do not treat an implementation proposal as an accepted product decision.
 
 Skill Bill's architecture principles inform this project. Its workflow engine, platform packs, skill-generation contracts, and orchestration machinery are not SkillLink requirements. This repository's instructions must work without a sibling Skill Bill checkout.
 
@@ -36,7 +36,7 @@ Skill Bill's architecture principles inform this project. Its workflow engine, p
 
 ## Architecture requirements
 
-Follow [the architecture](docs/ARCHITECTURE.md), including its design principles and dependency graph. The target modules are `domain`, `application`, `infrastructure`, `desktop`, and `app`. The modules exist; `app` currently owns the desktop entry point and packaging, and `desktop` owns the initial library shell. CLI implementation comes next; retain `app` as the sole composition root and keep command handling separate from business rules.
+Follow [the architecture](docs/ARCHITECTURE.md), including its design principles and dependency graph. The target modules are `domain`, `application`, `infrastructure`, `desktop`, `cli`, and `app`. The modules exist; `app` owns desktop and CLI composition plus packaging, `cli` owns terminal parsing and rendering, and `desktop` owns the initial library shell. Retain `app` as the sole composition root and keep command handling separate from business rules.
 
 - Domain rules have no UI or IO dependencies. Application use cases own policy and ports; adapters implement those ports.
 - `app` is the sole composition root. CLI and desktop code call application operations and never manipulate files, links, or database entities directly.

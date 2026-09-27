@@ -1,6 +1,6 @@
 # SkillLink architecture
 
-Status: the five Gradle modules, build checks, Compose desktop shell, and native packaging exist. The CLI is the next delivery target; application operations and persistence remain planned. The dependency guard checks direct production project dependencies only.
+Status: the six Gradle modules, build checks, Compose desktop shell, native packaging, and the subtask 1 CLI install/list path exist. Management operations remain planned. The dependency guard checks direct production project dependencies only.
 
 Read [the product idea](idea.md) first. [Code principles](code-principles.md) define Kotlin and build conventions. [Observability policy](observability-policy.md) defines failure reporting. These documents adapt Skill Bill's principles to SkillLink's scope and are self-contained.
 
@@ -40,15 +40,18 @@ Keep serialized keys, versions, and closed wire tokens under one owner. Schema v
 
 ## Target modules and dependency direction
 
-Arrows below show the existing allowed source dependencies. The CLI must retain these inward boundaries and `app` as the sole composition root. Its package or module placement will be specified with the CLI implementation; this delivery change does not add a module or dependency edge.
+Arrows below show the allowed source dependencies. `app` remains the sole composition root.
 
 ```mermaid
 flowchart TD
-    App[app: entry point and composition] --> Desktop[desktop: Compose presentation]
+    App[app: entry point and composition] --> Cli[cli: terminal presentation]
+    App --> Desktop[desktop: Compose presentation]
     App --> Infrastructure[infrastructure: filesystem, agents, SQLite]
     App --> Application[application: use cases and ports]
+    Cli --> Application
+    Cli --> Domain
     Desktop --> Application
-    Desktop --> Domain[domain: rules and values]
+    Desktop --> Domain
     Infrastructure --> Application
     Infrastructure --> Domain
     Application --> Domain
@@ -59,6 +62,7 @@ flowchart TD
 | `domain` | Skill identity, name comparison, installation rules, closed outcomes | IO, UI state, persistence entities, agent home discovery |
 | `application` | Use cases, port contracts, operation coordination, recovery policy | Concrete filesystem operations, SQL, Compose, dependency wiring |
 | `infrastructure` | Filesystem and link operations, agent location resolution, SQLite/Room, diagnostics | UI decisions or independent versions of application policy |
+| `cli` | Argument parsing, rendering, exit status | Filesystem, SQL, import and rollback policy |
 | `desktop` | Compose views, presentation state, user interaction, accessibility | File mutation, SQL, import and rollback rules |
 | `app` | Main entry point, composition, application lifetime, packaging | Business logic or a second application service layer |
 
@@ -76,7 +80,7 @@ Use `skilllink` as the package root. Cluster by product responsibility within ea
 | `installation` | Import, per-agent links, collision handling, operation recovery |
 | `agent` | Agent identity, capabilities, global destination resolution |
 | `activity` | Recorded events, coverage, activity queries, later collection integrations |
-| `trash` | Later removal, retention, and restore behavior |
+| `trash` | Removed-content retention and later restore behavior |
 | `diagnostics` | Structured failure and recovery evidence |
 
 These are ownership boundaries, not a requirement to create empty packages. Keep model types beside their area. Do not collect unrelated types in global `model`, `service`, or `utils` packages.
@@ -186,7 +190,7 @@ Activity collectors, once researched, provide evidence through an application in
 
 Persist recorded events and coverage in the local database. Handle duplicate source events before deriving counts. A read event remains a read event unless an integration can establish stronger evidence. Recommendations consume recorded activity and coverage, never inferred zeros for untracked agents.
 
-Trash and undo remain optional follow-on work. They require owned-content moves, removal of owned links, and stored restore intent. Restore rechecks name and destination conflicts. Retention and permanent deletion remain product decisions; do not implement an automatic purge policy by assumption.
+Trash movement and owned-link removal are part of SL-2. Undo and restore remain optional follow-on work. Restore rechecks name and destination conflicts. Retention and permanent deletion remain product decisions; do not implement an automatic purge policy by assumption.
 
 ## Build and distribution
 
