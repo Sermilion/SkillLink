@@ -219,15 +219,16 @@ class NativeFilesystemAdapter : FilesystemPort {
             else -> {
                 runCatching {
                     Files.move(sourceRoot, quarantine)
-                    if (currentFingerprint(quarantine) != fingerprint) {
-                        Files.move(quarantine, sourceRoot)
-                        SafeRemovalOutcome.Blocked
-                    } else {
-                        if (Files.isDirectory(quarantine, LinkOption.NOFOLLOW_LINKS)) {
-                            NativeFilesystemSupport.removeRecursive(quarantine)
+                    if (Files.isDirectory(quarantine, LinkOption.NOFOLLOW_LINKS)) {
+                        if (NativeFilesystemSupport.fingerprint(quarantine) != fingerprint) {
+                            Files.move(quarantine, sourceRoot)
+                            SafeRemovalOutcome.Blocked
                         } else {
-                            Files.deleteIfExists(quarantine)
+                            NativeFilesystemSupport.removeRecursive(quarantine)
+                            SafeRemovalOutcome.Removed
                         }
+                    } else {
+                        Files.deleteIfExists(quarantine)
                         SafeRemovalOutcome.Removed
                     }
                 }.getOrElse {
