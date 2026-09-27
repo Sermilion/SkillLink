@@ -20,158 +20,158 @@ import skilllink.domain.library.SkillNamePolicy
 import java.nio.file.Path
 
 class SkillLinkCli(
-    private val installOperationProvider: () -> InstallSkillOperation,
-    private val listOperationProvider: () -> ListManagedSkillsOperation,
-    private val manageOperationProvider: () -> ManageSkillsOperation,
-    private val workingDirectory: Path = Path.of("").toAbsolutePath(),
+  private val installOperationProvider: () -> InstallSkillOperation,
+  private val listOperationProvider: () -> ListManagedSkillsOperation,
+  private val manageOperationProvider: () -> ManageSkillsOperation,
+  private val workingDirectory: Path = Path.of("").toAbsolutePath(),
 ) {
-    fun run(args: Array<String>): RenderedCliOutcome =
-        when (val parsed = CliArgumentParser.parse(args, workingDirectory)) {
-            is CliParseOutcome.Failed -> {
-                CliRenderer.renderParseFailure(parsed)
-            }
+  fun run(args: Array<String>): RenderedCliOutcome =
+    when (val parsed = CliArgumentParser.parse(args, workingDirectory)) {
+      is CliParseOutcome.Failed -> {
+        CliRenderer.renderParseFailure(parsed)
+      }
 
-            is CliParseOutcome.Parsed -> {
-                when (val command = parsed.command) {
-                    CliCommand.Help -> {
-                        CliRenderer.renderHelp()
-                    }
+      is CliParseOutcome.Parsed -> {
+        when (val command = parsed.command) {
+          CliCommand.Help -> {
+            CliRenderer.renderHelp()
+          }
 
-                    CliCommand.Version -> {
-                        CliRenderer.renderVersion()
-                    }
+          CliCommand.Version -> {
+            CliRenderer.renderVersion()
+          }
 
-                    CliCommand.List -> {
-                        try {
-                            CliRenderer.renderList(listOperationProvider().execute())
-                        } catch (_: Exception) {
-                            CliRenderer.renderList(ListSkillsOutcome.Failed.StorageInvalid)
-                        }
-                    }
-
-                    is CliCommand.Install -> {
-                        val agents =
-                            command.agents.ifEmpty {
-                                promptForAgents() ?: return CliRenderer.renderParseFailure(
-                                    CliParseOutcome.Failed.InvalidArguments,
-                                )
-                            }
-                        try {
-                            CliRenderer.renderInstall(
-                                installOperationProvider().execute(
-                                    InstallSkillRequest.NewImport(
-                                        skillFile = command.skillFile,
-                                        agents = agents,
-                                        removeOriginal = command.removeOriginal,
-                                    ),
-                                ),
-                            )
-                        } catch (_: Exception) {
-                            CliRenderer.renderInstall(InstallSkillOutcome.Failed.IoFailure)
-                        }
-                    }
-
-                    is CliCommand.Enable -> {
-                        executeManagement(command.skillName, command.agents, ManagementAction.Enable)
-                    }
-
-                    is CliCommand.Disable -> {
-                        executeManagement(command.skillName, command.agents, ManagementAction.Disable)
-                    }
-
-                    is CliCommand.Remove -> {
-                        executeManagement(command.skillName, emptySet(), ManagementAction.Remove)
-                    }
-                }
-            }
-        }
-
-    private fun promptForAgents(): Set<AgentId>? {
-        val supported = AgentId.entries
-        println("Select agents to install for (comma-separated):")
-        supported.forEachIndexed { index, agent ->
-            println("  ${index + 1}. ${agent.wireValue}")
-        }
-        println("  ${supported.size + 1}. all")
-        print("▸ Agents: ")
-        val input =
+          CliCommand.List -> {
             try {
-                readlnOrNull()?.trim().orEmpty()
+              CliRenderer.renderList(listOperationProvider().execute())
             } catch (_: Exception) {
-                ""
+              CliRenderer.renderList(ListSkillsOutcome.Failed.StorageInvalid)
             }
-        if (input.isEmpty()) return null
-        return parseAgentInput(input, supported)
+          }
+
+          is CliCommand.Install -> {
+            val agents =
+              command.agents.ifEmpty {
+                promptForAgents() ?: return CliRenderer.renderParseFailure(
+                  CliParseOutcome.Failed.InvalidArguments,
+                )
+              }
+            try {
+              CliRenderer.renderInstall(
+                installOperationProvider().execute(
+                  InstallSkillRequest.NewImport(
+                    skillFile = command.skillFile,
+                    agents = agents,
+                    removeOriginal = command.removeOriginal,
+                  ),
+                ),
+              )
+            } catch (_: Exception) {
+              CliRenderer.renderInstall(InstallSkillOutcome.Failed.IoFailure)
+            }
+          }
+
+          is CliCommand.Enable -> {
+            executeManagement(command.skillName, command.agents, ManagementAction.Enable)
+          }
+
+          is CliCommand.Disable -> {
+            executeManagement(command.skillName, command.agents, ManagementAction.Disable)
+          }
+
+          is CliCommand.Remove -> {
+            executeManagement(command.skillName, emptySet(), ManagementAction.Remove)
+          }
+        }
+      }
     }
 
-    private fun parseAgentInput(
-        input: String,
-        supported: List<AgentId>,
-    ): Set<AgentId>? {
-        val allAgents = supported.toSet()
-        val selected = linkedSetOf<AgentId>()
-        var failed = false
-        for (token in input.split(",")) {
-            val trimmed = token.trim()
-            if (trimmed.isEmpty()) continue
-            val resolved = resolveAgentToken(trimmed, trimmed.toIntOrNull(), supported)
-            if (resolved == null) {
-                System.err.println("Unknown agent: $trimmed")
-                failed = true
-            } else if (resolved.size == allAgents.size) {
-                selected.addAll(allAgents)
-            } else {
-                selected.addAll(resolved)
-            }
-        }
-        if (failed) return null
-        return selected.ifEmpty { null }
+  private fun promptForAgents(): Set<AgentId>? {
+    val supported = AgentId.entries
+    println("Select agents to install for (comma-separated):")
+    supported.forEachIndexed { index, agent ->
+      println("  ${index + 1}. ${agent.wireValue}")
+    }
+    println("  ${supported.size + 1}. all")
+    print("▸ Agents: ")
+    val input =
+      try {
+        readlnOrNull()?.trim().orEmpty()
+      } catch (_: Exception) {
+        ""
+      }
+    if (input.isEmpty()) return null
+    return parseAgentInput(input, supported)
+  }
+
+  private fun parseAgentInput(
+    input: String,
+    supported: List<AgentId>,
+  ): Set<AgentId>? {
+    val allAgents = supported.toSet()
+    val selected = linkedSetOf<AgentId>()
+    var failed = false
+    for (token in input.split(",")) {
+      val trimmed = token.trim()
+      if (trimmed.isEmpty()) continue
+      val resolved = resolveAgentToken(trimmed, trimmed.toIntOrNull(), supported)
+      if (resolved == null) {
+        System.err.println("Unknown agent: $trimmed")
+        failed = true
+      } else if (resolved.size == allAgents.size) {
+        selected.addAll(allAgents)
+      } else {
+        selected.addAll(resolved)
+      }
+    }
+    if (failed) return null
+    return selected.ifEmpty { null }
+  }
+
+  private fun resolveAgentToken(
+    token: String,
+    asNumber: Int?,
+    supported: List<AgentId>,
+  ): Set<AgentId>? =
+    when {
+      asNumber == supported.size + 1 -> supported.toSet()
+      asNumber != null && asNumber in 1..supported.size -> setOf(supported[asNumber - 1])
+      token.equals("all", ignoreCase = true) -> supported.toSet()
+      else -> AgentId.fromWire(token.lowercase())?.let { setOf(it) }
     }
 
-    private fun resolveAgentToken(
-        token: String,
-        asNumber: Int?,
-        supported: List<AgentId>,
-    ): Set<AgentId>? =
-        when {
-            asNumber == supported.size + 1 -> supported.toSet()
-            asNumber != null && asNumber in 1..supported.size -> setOf(supported[asNumber - 1])
-            token.equals("all", ignoreCase = true) -> supported.toSet()
-            else -> AgentId.fromWire(token.lowercase())?.let { setOf(it) }
-        }
+  private enum class ManagementAction {
+    Enable,
+    Disable,
+    Remove,
+  }
 
-    private enum class ManagementAction {
-        Enable,
-        Disable,
-        Remove,
+  private fun executeManagement(
+    skillName: String,
+    agents: Set<AgentId>,
+    action: ManagementAction,
+  ): RenderedCliOutcome {
+    val key = SkillNamePolicy.comparisonKeyForLookup(skillName)
+    if (key == null) {
+      return when (action) {
+        ManagementAction.Enable -> CliRenderer.renderEnable(EnableSkillOutcome.Failed.InvalidArguments)
+        ManagementAction.Disable -> CliRenderer.renderDisable(DisableSkillOutcome.Failed.InvalidArguments)
+        ManagementAction.Remove -> CliRenderer.renderRemove(RemoveSkillOutcome.Failed.InvalidArguments)
+      }
     }
-
-    private fun executeManagement(
-        skillName: String,
-        agents: Set<AgentId>,
-        action: ManagementAction,
-    ): RenderedCliOutcome {
-        val key = SkillNamePolicy.comparisonKeyForLookup(skillName)
-        if (key == null) {
-            return when (action) {
-                ManagementAction.Enable -> CliRenderer.renderEnable(EnableSkillOutcome.Failed.InvalidArguments)
-                ManagementAction.Disable -> CliRenderer.renderDisable(DisableSkillOutcome.Failed.InvalidArguments)
-                ManagementAction.Remove -> CliRenderer.renderRemove(RemoveSkillOutcome.Failed.InvalidArguments)
-            }
-        }
-        val request = SkillManagementRequest(comparisonKey = key, explicitAgents = agents)
-        return try {
-            when (action) {
-                ManagementAction.Enable -> CliRenderer.renderEnable(manageOperationProvider().enable(request))
-                ManagementAction.Disable -> CliRenderer.renderDisable(manageOperationProvider().disable(request))
-                ManagementAction.Remove -> CliRenderer.renderRemove(manageOperationProvider().remove(request))
-            }
-        } catch (_: Exception) {
-            when (action) {
-                ManagementAction.Enable -> CliRenderer.renderEnable(EnableSkillOutcome.Failed.IoFailure)
-                ManagementAction.Disable -> CliRenderer.renderDisable(DisableSkillOutcome.Failed.IoFailure)
-                ManagementAction.Remove -> CliRenderer.renderRemove(RemoveSkillOutcome.Failed.IoFailure)
-            }
-        }
+    val request = SkillManagementRequest(comparisonKey = key, explicitAgents = agents)
+    return try {
+      when (action) {
+        ManagementAction.Enable -> CliRenderer.renderEnable(manageOperationProvider().enable(request))
+        ManagementAction.Disable -> CliRenderer.renderDisable(manageOperationProvider().disable(request))
+        ManagementAction.Remove -> CliRenderer.renderRemove(manageOperationProvider().remove(request))
+      }
+    } catch (_: Exception) {
+      when (action) {
+        ManagementAction.Enable -> CliRenderer.renderEnable(EnableSkillOutcome.Failed.IoFailure)
+        ManagementAction.Disable -> CliRenderer.renderDisable(DisableSkillOutcome.Failed.IoFailure)
+        ManagementAction.Remove -> CliRenderer.renderRemove(RemoveSkillOutcome.Failed.IoFailure)
+      }
     }
+  }
 }
