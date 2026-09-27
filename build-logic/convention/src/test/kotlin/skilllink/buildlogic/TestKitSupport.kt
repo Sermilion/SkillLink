@@ -18,7 +18,7 @@ internal fun Path.write(
 ): Path {
   val destination = resolve(relative)
   Files.createDirectories(destination.parent)
-  return Files.writeString(destination, content)
+  return Files.writeString(destination, content.replace("\r\n", "\n").replace('\r', '\n'))
 }
 
 internal fun Path.prepareFixture() {
