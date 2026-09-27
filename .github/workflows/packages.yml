@@ -70,6 +70,8 @@ jobs:
       group: skilllink-macmini
       cancel-in-progress: false
     steps:
+      - name: Isolate Gradle state
+        run: echo "GRADLE_USER_HOME=$RUNNER_TEMP/skilllink-gradle" >> "$GITHUB_ENV"
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:

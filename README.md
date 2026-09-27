@@ -61,7 +61,7 @@ The workflow uses pinned action commits and a read-only repository token. Pull r
 
 Run the shell with `./gradlew :app:run`. Compose Multiplatform 1.7.3 uses the existing Kotlin 2.0.21 compiler plugin and Material 3. Google Maven supplies the AndroidX dependencies required by Compose; other libraries continue to resolve from Maven Central. Spotless and Detekt allow the standard uppercase naming for functions annotated with `@Composable`.
 
-Build native installers on the matching operating system with JDK 21:
+Build native installers on the matching operating system with Temurin JDK 21. Compose rejects Homebrew's JDK for macOS packaging; CI installs Temurin with `actions/setup-java`.
 
 | Host | Command | Output directory |
 | --- | --- | --- |

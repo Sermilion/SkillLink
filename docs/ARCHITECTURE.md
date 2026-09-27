@@ -1,6 +1,6 @@
 # SkillLink architecture
 
-Status: target application architecture. The five Gradle modules and build checks exist, but they contain no application implementation yet. The dependency guard checks direct production project dependencies only.
+Status: the five Gradle modules, build checks, Compose desktop shell, and native packaging exist. Application operations and persistence remain planned. The dependency guard checks direct production project dependencies only.
 
 Read [the product idea](idea.md) first. [Code principles](code-principles.md) define Kotlin and build conventions. [Observability policy](observability-policy.md) defines failure reporting. These documents adapt Skill Bill's principles to SkillLink's scope and are self-contained.
 
