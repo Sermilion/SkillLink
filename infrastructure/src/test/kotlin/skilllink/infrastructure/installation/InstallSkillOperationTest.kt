@@ -35,7 +35,11 @@ class InstallSkillOperationTest {
 
         val outcome =
             fixture.operation.execute(
-                InstallSkillRequest.NewImport(source.resolve("SKILL.md"), setOf(AgentId.Claude)),
+                InstallSkillRequest.NewImport(
+                    source.resolve("SKILL.md"),
+                    setOf(AgentId.Claude),
+                    removeOriginal = true,
+                ),
             )
 
         assertTrue(outcome is InstallSkillOutcome.Completed)

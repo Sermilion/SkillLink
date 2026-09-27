@@ -262,10 +262,14 @@ private fun commitPublished(
     )
     operation.catalog.commitOperation(state.operationId)
     val removal =
-        operation.filesystem.safeRemoveOriginal(
-            state.inspected.bundleRoot,
-            state.inspected.sourceFingerprint,
-        )
+        if (import.removeOriginal) {
+            operation.filesystem.safeRemoveOriginal(
+                state.inspected.bundleRoot,
+                state.inspected.sourceFingerprint,
+            )
+        } else {
+            SafeRemovalOutcome.Unchanged
+        }
     val stagingClean =
         operation.filesystem.removePathIfOwned(
             state.stagingRoot,
