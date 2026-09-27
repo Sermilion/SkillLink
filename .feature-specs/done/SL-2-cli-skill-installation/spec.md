@@ -29,6 +29,7 @@ Import includes the selected `SKILL.md` and supporting files in that one skill f
 ```sh
 skill-link install /path/to/code-review/SKILL.md --agent claude --agent codex
 skill-link list
+skill-link open code-review
 skill-link disable code-review
 skill-link disable code-review --agent claude
 skill-link enable code-review
@@ -44,13 +45,14 @@ Use the same syntax in the Windows launcher. Paths containing spaces work with o
 | --- | --- |
 | `install <skill-file> --agent <agent>...` | Requires at least one explicit agent. Validates the entire request before mutations, imports one bundle, and enables it for every selected agent as one operation. No implicit all-agents default. |
 | `list` | Lists every active managed skill, including skills disabled everywhere. Shows a display number, exact name, canonical path, and per-agent desired state and observed link condition. |
+| `open <name>` | Resolves an active managed skill by name and opens its canonical `SKILL.md` with the operating system's default edit action. Reports unsupported editor integration, missing content, and launch failures distinctly. |
 | `disable <name> [--agent <agent>...]` | Without options, disables every configured installation of that skill. With options, disables only those agents. Preserves content and remembered agent choices. |
 | `enable <name> [--agent <agent>...]` | Without options, enables the skill for its remembered agents. Explicit options can add agents or re-enable a subset. Requires an intact canonical source and rechecks destinations. |
 | `remove <name>` | Removes the skill from the active catalog, removes its owned agent links, and moves canonical content to app-managed trash in one recoverable operation. Rejects `--agent`, because partial unlinking is `disable`. |
 
 Agent identifiers are `claude`, `codex`, `junie`, and `cursor`. Reject unknown agents and options before acquiring mutation ownership. Repeated agent options deduplicate. Commands do not prompt, require a TTY, expand globs internally, or interpret skill content as instructions.
 
-Management arguments are skill names, never row numbers, positions, paths, or internal IDs. Match names case-insensitively through the domain comparison key. `disable 3` searches for a skill literally named `3`; it must never resolve list row 3. Names from older list output must not retarget another skill because the list changed.
+Management arguments, including `open`, are skill names, never row numbers, positions, paths, or internal IDs. Match names case-insensitively through the domain comparison key. `disable 3` searches for a skill literally named `3`; it must never resolve list row 3. Names from older list output must not retarget another skill because the list changed.
 
 List sorts by the domain name key and numbers rows starting at 1 for each invocation. The number is presentation only and is not persisted. Empty catalog output states that no managed skills exist. Trashed skills are excluded. Render names, paths, and errors as plain text with terminal control characters escaped. Do not scan directories to assemble the catalog.
 
@@ -60,7 +62,7 @@ A mutation affecting multiple agents succeeds for all selected agents or rolls b
 
 ## Output and exit status
 
-Successful mutations report the exact skill name, canonical or trash path as appropriate, affected agents, and any remaining cleanup. Show a restart reminder for agents whose links changed. Do not claim that an agent loaded the skill. No-op commands say that no changes were needed.
+Successful mutations report the exact skill name, canonical or trash path as appropriate, affected agents, and any remaining cleanup. Show a restart reminder for agents whose links changed. `open` reports the canonical file path and reminds users to restart affected agents after editing. Do not claim that an agent loaded the skill. No-op commands say that no changes were needed.
 
 Use stdout for help, version, list data, and completed outcomes. Use stderr for failures and incomplete outcomes. Help and version must work without opening or creating the library. Do not initialize Compose on any CLI path. A missing library produces an empty list without creating it. An inaccessible or invalid database is an error, not an empty library.
 

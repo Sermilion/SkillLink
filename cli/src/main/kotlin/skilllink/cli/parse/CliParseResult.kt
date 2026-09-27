@@ -29,6 +29,10 @@ sealed interface CliCommand {
   data class Remove(
     val skillName: String,
   ) : CliCommand
+
+  data class Open(
+    val skillName: String,
+  ) : CliCommand
 }
 
 sealed interface CliParseOutcome {

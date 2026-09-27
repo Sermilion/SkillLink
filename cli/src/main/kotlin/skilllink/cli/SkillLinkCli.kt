@@ -10,6 +10,9 @@ import skilllink.application.installation.model.ListSkillsOutcome
 import skilllink.application.installation.model.RemoveSkillOutcome
 import skilllink.application.installation.model.SkillManagementRequest
 import skilllink.application.library.ListManagedSkillsOperation
+import skilllink.application.library.OpenManagedSkillOperation
+import skilllink.application.library.OpenManagedSkillOutcome
+import skilllink.application.library.OpenManagedSkillRequest
 import skilllink.cli.parse.CliArgumentParser
 import skilllink.cli.parse.CliCommand
 import skilllink.cli.parse.CliParseOutcome
@@ -23,6 +26,7 @@ class SkillLinkCli(
   private val installOperationProvider: () -> InstallSkillOperation,
   private val listOperationProvider: () -> ListManagedSkillsOperation,
   private val manageOperationProvider: () -> ManageSkillsOperation,
+  private val openOperationProvider: () -> OpenManagedSkillOperation,
   private val workingDirectory: Path = Path.of("").toAbsolutePath(),
 ) {
   fun run(args: Array<String>): RenderedCliOutcome =
@@ -81,6 +85,10 @@ class SkillLinkCli(
 
           is CliCommand.Remove -> {
             executeManagement(command.skillName, emptySet(), ManagementAction.Remove)
+          }
+
+          is CliCommand.Open -> {
+            executeOpen(command.skillName)
           }
         }
       }
@@ -172,6 +180,17 @@ class SkillLinkCli(
         ManagementAction.Disable -> CliRenderer.renderDisable(DisableSkillOutcome.Failed.IoFailure)
         ManagementAction.Remove -> CliRenderer.renderRemove(RemoveSkillOutcome.Failed.IoFailure)
       }
+    }
+  }
+
+  private fun executeOpen(skillName: String): RenderedCliOutcome {
+    val key =
+      SkillNamePolicy.comparisonKeyForLookup(skillName)
+        ?: return CliRenderer.renderOpen(OpenManagedSkillOutcome.Failed.InvalidArguments)
+    return try {
+      CliRenderer.renderOpen(openOperationProvider().execute(OpenManagedSkillRequest(key)))
+    } catch (_: Exception) {
+      CliRenderer.renderOpen(OpenManagedSkillOutcome.Failed.IoFailure)
     }
   }
 }

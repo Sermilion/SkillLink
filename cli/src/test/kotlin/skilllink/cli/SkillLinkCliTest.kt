@@ -13,6 +13,7 @@ class SkillLinkCliTest {
         installOperationProvider = { error("install is not used") },
         listOperationProvider = { error("invalid database") },
         manageOperationProvider = { error("manage is not used") },
+        openOperationProvider = { error("open is not used") },
         workingDirectory = Path.of("/tmp"),
       )
 

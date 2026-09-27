@@ -5,6 +5,7 @@ import skilllink.application.installation.model.EnableSkillOutcome
 import skilllink.application.installation.model.InstallSkillOutcome
 import skilllink.application.installation.model.ListSkillsOutcome
 import skilllink.application.installation.model.RemoveSkillOutcome
+import skilllink.application.library.OpenManagedSkillOutcome
 import skilllink.cli.exit.CliExitCodes
 import skilllink.cli.parse.CliParseOutcome
 
@@ -31,6 +32,7 @@ object CliRenderer {
         """
         skill-link install <SKILL.md> --agent <agent> [--agent <agent>...]
         skill-link list
+        skill-link open <name>
         skill-link enable <name> [--agent <agent>...]
         skill-link disable <name> [--agent <agent>...]
         skill-link remove <name>
@@ -40,7 +42,7 @@ object CliRenderer {
         Management uses skill names (case-insensitive), never list row numbers.
         Removed skills remain under ~/.skilllink/trash/; restore and permanent deletion are not available.
         Agents: claude, codex, junie, cursor. Junie and Cursor may also read shared skill roots.
-        Restart affected agents after link changes.
+        Restart affected agents after link changes or source edits.
         """.trimIndent() + "\n",
       stderr = "",
     )
@@ -121,6 +123,41 @@ object CliRenderer {
     when (outcome) {
       is RemoveSkillOutcome.Completed -> renderCompletedRemove(outcome)
       is RemoveSkillOutcome.Failed -> renderRemoveFailure(outcome)
+    }
+
+  fun renderOpen(outcome: OpenManagedSkillOutcome): RenderedCliOutcome =
+    when (outcome) {
+      is OpenManagedSkillOutcome.Opened -> {
+        RenderedCliOutcome(
+          CliExitCodes.SUCCESS,
+          "Opened ${outcome.skillName} at ${outcome.skillFile}. Restart affected agents after editing.\n",
+          "",
+        )
+      }
+
+      OpenManagedSkillOutcome.Failed.InvalidArguments -> {
+        failure(CliExitCodes.INVALID_ARGUMENTS, "Invalid skill name.")
+      }
+
+      OpenManagedSkillOutcome.Failed.NotFound -> {
+        failure(CliExitCodes.NOT_FOUND, "Managed skill not found.")
+      }
+
+      OpenManagedSkillOutcome.Failed.IntegrityFailure -> {
+        failure(CliExitCodes.IO_OR_PLATFORM, "Canonical skill content is missing or invalid.")
+      }
+
+      OpenManagedSkillOutcome.Failed.WriterBusy -> {
+        failure(CliExitCodes.CONFLICT, "Another SkillLink writer is active.")
+      }
+
+      OpenManagedSkillOutcome.Failed.Unavailable -> {
+        failure(CliExitCodes.IO_OR_PLATFORM, "No default editor or file handler is available for the skill file.")
+      }
+
+      OpenManagedSkillOutcome.Failed.IoFailure -> {
+        failure(CliExitCodes.IO_OR_PLATFORM, "Could not open the skill file.")
+      }
     }
 }
 

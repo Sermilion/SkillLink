@@ -23,10 +23,18 @@ object CliArgumentParser {
       "--help", "-h", "help" -> CliParseOutcome.Parsed(CliCommand.Help)
       "--version", "-V", "version" -> CliParseOutcome.Parsed(CliCommand.Version)
       "list" -> CliParseOutcome.Parsed(CliCommand.List)
+      "open" -> parseOpen(tokens)
       "install" -> parseInstall(tokens, workingDirectory)
       "enable", "disable" -> parseManagement(tokens, allowAgents = true)
       "remove" -> parseManagement(tokens, allowAgents = false)
       else -> CliParseOutcome.Failed.InvalidArguments
+    }
+
+  private fun parseOpen(tokens: List<String>): CliParseOutcome =
+    if (tokens.size == 2) {
+      CliParseOutcome.Parsed(CliCommand.Open(tokens[1]))
+    } else {
+      CliParseOutcome.Failed.InvalidArguments
     }
 
   private fun parseInstall(

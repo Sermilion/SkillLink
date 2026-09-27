@@ -182,13 +182,13 @@ internal object NativeFilesystemSupport {
 
   fun pathIdentity(path: Path): String? =
     try {
-      Files
-        .readAttributes(
+      val attributes =
+        Files.readAttributes(
           path,
           BasicFileAttributes::class.java,
           LinkOption.NOFOLLOW_LINKS,
-        ).fileKey()
-        ?.toString()
+        )
+      attributes.fileKey()?.toString() ?: "fingerprint:${fingerprint(path)}"
     } catch (_: Exception) {
       null
     }

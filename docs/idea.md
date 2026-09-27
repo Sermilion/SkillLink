@@ -85,9 +85,9 @@ Trash and undo are nice to have, rather than first-release blockers. Retention, 
 
 The first release uses a CLI to import an explicitly selected local skill, list managed skills and their canonical paths, manage per-agent links, and report installation condition. Commands must report conflicts, blocked recovery, pending cleanup, and restart reminders. Unlinking preserves the canonical source.
 
-The executable is `skill-link`. Installation takes a path to a skill file and an explicit selection of agents. The list shows numbered rows, but enable, disable, and remove take the skill name. Row numbers are display aids and cannot select a skill for mutation.
+The executable is `skill-link`. Installation takes a path to a skill file and an explicit selection of agents. The list shows numbered rows, but open, enable, disable, and remove take the skill name. Row numbers are display aids and cannot select a skill for mutation. `open <name>` launches the managed `SKILL.md` in the operating system's default editor. Users can edit the canonical copy there. SkillLink reminds them to restart affected agents after the change.
 
-[SL-2](../.feature-specs/done/SL-2-cli-skill-installation/spec.md) specifies the command syntax, output, exit codes, distribution, and recovery requirements. Its proposed defaults import the selected `SKILL.md` with its containing bundle and move removed skills to local trash. Those source and removal choices remain design defaults for review. An integrated editor is deferred to the desktop stage; users can identify the canonical path to edit with their own tools.
+[SL-2](../.feature-specs/done/SL-2-cli-skill-installation/spec.md) specifies the command syntax, output, exit codes, distribution, and recovery requirements. Its proposed defaults import the selected `SKILL.md` with its containing bundle and move removed skills to local trash. Those source and removal choices remain design defaults for review. The CLI can launch the canonical `SKILL.md` in the system's default editor. The desktop editor remains part of the later desktop stage.
 
 ### Later desktop interface
 

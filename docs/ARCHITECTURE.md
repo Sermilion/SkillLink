@@ -1,6 +1,6 @@
 # SkillLink architecture
 
-Status: the six Gradle modules, build checks, Compose desktop shell, native packaging, and the subtask 1 CLI install/list path exist. Management operations remain planned. The dependency guard checks direct production project dependencies only.
+Status: the six Gradle modules, build checks, Compose desktop shell, native packaging, and CLI install, list, open, enable, disable, and remove operations exist. The dependency guard checks direct production project dependencies only.
 
 Read [the product idea](idea.md) first. [Code principles](code-principles.md) define Kotlin and build conventions. [Observability policy](observability-policy.md) defines failure reporting. These documents adapt Skill Bill's principles to SkillLink's scope and are self-contained.
 
@@ -87,7 +87,7 @@ These are ownership boundaries, not a requirement to create empty packages. Keep
 
 ## Application boundary and ports
 
-The CLI and later desktop call named application operations for listing managed skills, reading or saving content, importing a selected skill, enabling or disabling an agent installation, and checking a managed installation's condition.
+The CLI and later desktop call named application operations for listing managed skills, opening or saving content, importing a selected skill, enabling or disabling an agent installation, and checking a managed installation's condition. The CLI open operation resolves an active managed skill by name, validates its canonical bundle, and asks an adapter to open its `SKILL.md` through the operating system's associated application.
 
 Use cases expose typed requests and results. Coroutine APIs may express suspension or observation; Compose types and Room entities may not cross this boundary. Ports accept application values and expose operations needed by their consumers. They do not return connections, DAOs, file handles, or an adapter's entire dependency graph.
 
@@ -95,6 +95,7 @@ Initial port responsibilities are:
 
 - Catalog reads and transactional catalog/operation writes.
 - Verified copying, content replacement, owned link operations, and rollback cleanup.
+- Launching a managed source file in the operating system's default editor.
 - Resolution of a selected agent's global destination and link capability.
 - Structured diagnostics.
 
@@ -166,7 +167,7 @@ No cloud storage or analytics backend is required. Activity collection remains s
 
 ## CLI lifecycle
 
-Command handling parses arguments, calls typed application operations, and maps results to terminal output and exit status. It must not implement filesystem, database, import, or rollback policy. A command must run without opening a desktop window.
+Command handling parses arguments, calls typed application operations, and maps results to terminal output and exit status. It must not implement filesystem, database, import, or rollback policy. A command must run without opening a SkillLink desktop window. The `open` command may ask the operating system to launch its configured application for a managed `SKILL.md`.
 
 The process lifetime owns command work and its resources. Before conflicting mutations, acquire writer ownership and complete required recovery. Cancellation before commit requests rollback; interruption after commit leaves the installation committed and any remaining cleanup recoverable on the next invocation.
 

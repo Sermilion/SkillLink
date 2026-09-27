@@ -69,7 +69,7 @@ compose.desktop {
       packageVersion = "1.0.0"
       description = "One skill library for your AI agents"
       vendor = "SkillLink"
-      modules("java.sql")
+      modules("java.sql", "java.desktop")
       linux {
         packageName = "skilllink"
       }

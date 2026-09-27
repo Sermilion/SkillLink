@@ -5,9 +5,11 @@ import skilllink.application.installation.ManageSkillsOperation
 import skilllink.application.installation.MutationGate
 import skilllink.application.installation.RecoveryCoordinator
 import skilllink.application.library.ListManagedSkillsOperation
+import skilllink.application.library.OpenManagedSkillOperation
 import skilllink.cli.SkillLinkCli
 import skilllink.infrastructure.agent.DefaultAgentRegistry
 import skilllink.infrastructure.diagnostics.FileDiagnostics
+import skilllink.infrastructure.filesystem.DefaultFileOpenerAdapter
 import skilllink.infrastructure.filesystem.NativeFilesystemAdapter
 import skilllink.infrastructure.layout.HomeLibraryLayout
 import skilllink.infrastructure.lock.FileWriterLock
@@ -58,14 +60,27 @@ object SkillLinkRuntimeFactory {
             store,
             gate,
           )
-        Triple(install, list, manage)
+        SkillLinkServices(
+          install = install,
+          list = list,
+          manage = manage,
+          open = OpenManagedSkillOperation(layout, store, filesystem, DefaultFileOpenerAdapter(), writerLock),
+        )
       }
     val cli =
       SkillLinkCli(
-        installOperationProvider = { services.value.first },
-        listOperationProvider = { services.value.second },
-        manageOperationProvider = { services.value.third },
+        installOperationProvider = { services.value.install },
+        listOperationProvider = { services.value.list },
+        manageOperationProvider = { services.value.manage },
+        openOperationProvider = { services.value.open },
       )
     return SkillLinkRuntime(cli)
   }
 }
+
+private data class SkillLinkServices(
+  val install: InstallSkillOperation,
+  val list: ListManagedSkillsOperation,
+  val manage: ManageSkillsOperation,
+  val open: OpenManagedSkillOperation,
+)
