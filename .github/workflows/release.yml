@@ -199,7 +199,9 @@ jobs:
             }
             (
               cd dist
-              sha256sum -c "${asset}.sha256"
+              if [[ "$asset" == *.tar.gz ]]; then
+                sha256sum -c "${asset}.sha256"
+              fi
             )
           done
           for found in dist/*; do
