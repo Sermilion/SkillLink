@@ -54,6 +54,9 @@ tasks.register<Copy>("skillLinkCliDistribution") {
   from(configurations.runtimeClasspath) {
     into("lib")
   }
+  from(rootProject.file("skills")) {
+    into("share/skills")
+  }
   into(layout.buildDirectory.dir("skill-link-cli"))
 }
 
