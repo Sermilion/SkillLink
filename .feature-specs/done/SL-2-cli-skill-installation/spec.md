@@ -11,12 +11,12 @@ Use Skill Bill's symlink installation principle. Implement SkillLink's own appli
 
 ## Required reading
 
-- `AGENTS.md`
-- `docs/idea.md`
-- `docs/ARCHITECTURE.md`
-- `docs/code-principles.md`
-- `docs/observability-policy.md`
-- `docs/cli-installation-research.md`
+- `../../../AGENTS.md`
+- `../../../docs/idea.md`
+- `../../../docs/ARCHITECTURE.md`
+- `../../../docs/code-principles.md`
+- `../../../docs/observability-policy.md`
+- `../../../docs/cli-installation-research.md`
 
 ## Scope and design defaults
 
@@ -99,7 +99,7 @@ The initial default destinations are:
 | Junie | `~/.junie/skills` |
 | Cursor | `~/.cursor/skills` |
 
-These defaults come from the official documentation recorded in `docs/cli-installation-research.md`. Verify them against official documentation during implementation and record the supported configuration matrix. Do not inherit historical `.codex/skills` or profile fan-out behavior from Skill Bill without current agent support. SL-2 does not discover profiles, read project configuration, or edit agent configuration. A malformed supported override is an explicit failure. Claude's reserved destination names from the research are conflicts for that adapter.
+These defaults come from the official documentation recorded in `../../../docs/cli-installation-research.md`. Verify them against official documentation during implementation and record the supported configuration matrix. Do not inherit historical `.codex/skills` or profile fan-out behavior from Skill Bill without current agent support. SL-2 does not discover profiles, read project configuration, or edit agent configuration. A malformed supported override is an explicit failure. Claude's reserved destination names from the research are conflicts for that adapter.
 
 Agent selection controls the links SkillLink creates. It does not promise exclusive visibility: Junie, Cursor, and other agents may also read shared skill roots. State this limitation in install help and README. Do not silently change other agents' discovery settings.
 

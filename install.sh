@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="https://github.com/Sermilion/SkillLink.git"
 REPO_OWNER="Sermilion"
 REPO_NAME="SkillLink"
-REPO_BRANCH="main"
 SKILLLINK_STATE_DIR="${HOME}/.skilllink"
 INSTALL_DIR="${SKILLLINK_INSTALL_DIR:-$SKILLLINK_STATE_DIR/app}"
 LAUNCHER_BIN_DIR="${SKILLLINK_BIN_DIR:-$HOME/.local/bin}"
 CLONE_DIR=""
-FROM_LOCAL=0
 FROM_SOURCE=0
 RELEASE_TAG="${SKILLLINK_RELEASE_TAG:-}"
 INSTALL_SOURCE="auto"
@@ -42,18 +39,16 @@ Install the skill-link CLI for managing AI agent skills.
 
 By default, the installer downloads a prebuilt CLI archive from the latest
 GitHub release (no git, Gradle, or build-time JDK required). A JDK 21+ is
-still needed at runtime. Use --from-source to build from a local or cloned
-checkout instead.
+still needed at runtime. Use --from-source to build from the local checkout
+instead (requires JDK 21 and a SkillLink repository).
 
 Options:
-  --from-source            Clone the repository and build from source with
-                           Gradle. Requires JDK 21 and git.
-  --local                  Build from this local checkout (implies --from-source).
-  --branch BRANCH          Git branch to clone when building from source
-                           (default: main). Ignored for prebuilt installs.
-  --release TAG            Use a specific release tag. For prebuilt installs
-                           this fetches that tag's assets. For --from-source
-                           this checks out that tag.
+  --from-source            Build from this local checkout with Gradle instead
+                           of downloading a prebuilt archive. Requires JDK 21.
+                           Equivalent to --local.
+  --local                  Same as --from-source.
+  --release TAG            Use a specific release tag. Downloads that tag's
+                           prebuilt assets.
   --install-dir DIR        Directory for the CLI distribution
                            (default: ~/.skilllink/app).
   --bin-dir DIR            Directory for the skill-link launcher symlink
@@ -77,9 +72,6 @@ Examples:
   curl -fsSL https://raw.githubusercontent.com/Sermilion/SkillLink/main/install.sh | bash -s -- --release v1.0.0
 
   # From source (local checkout):
-  ./install.sh --local
-
-  # From source (clone and build):
   ./install.sh --from-source
 USAGE
 }
@@ -91,24 +83,15 @@ parse_args() {
         usage
         exit 0
         ;;
-      --local)
-        FROM_LOCAL=1
-        FROM_SOURCE=1
-        INSTALL_SOURCE="source"
-        shift
-        ;;
       --from-source)
         FROM_SOURCE=1
         INSTALL_SOURCE="source"
         shift
         ;;
-      --branch)
-        if [[ $# -lt 2 || -z "$2" ]]; then
-          err "--branch requires a value."
-          exit 1
-        fi
-        REPO_BRANCH="$2"
-        shift 2
+      --local)
+        FROM_SOURCE=1
+        INSTALL_SOURCE="source"
+        shift
         ;;
       --release)
         if [[ $# -lt 2 || -z "$2" ]]; then
@@ -207,20 +190,7 @@ check_prebuilt_dependencies() {
 }
 
 check_source_dependencies() {
-  local missing=()
-  if [[ "$FROM_LOCAL" -ne 1 ]]; then
-    if ! command -v git >/dev/null 2>&1; then
-      missing+=("git (to clone the repository)")
-    fi
-  fi
-  if [[ ${#missing[@]} -gt 0 ]]; then
-    err "Missing required tools:"
-    local item
-    for item in "${missing[@]}"; do
-      err "  - $item"
-    done
-    exit 1
-  fi
+  :
 }
 
 compute_sha256() {
@@ -450,35 +420,15 @@ resolve_java() {
 }
 
 resolve_source_dir() {
-  if [[ "$FROM_LOCAL" -eq 1 ]]; then
-    local script_dir
-    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    if [[ ! -f "$script_dir/gradlew" ]]; then
-      err "--local requires running from the SkillLink repository root."
-      err "Could not find gradlew in: $script_dir"
-      exit 1
-    fi
-    CLONE_DIR="$script_dir"
-    ok "Using local checkout: $CLONE_DIR"
-    return 0
-  fi
-
-  local tmpdir
-  tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/skilllink-install.XXXXXX")"
-  CLEANUP_DIR="$tmpdir"
-  CLONE_DIR="$tmpdir/SkillLink"
-
-  local ref="$REPO_BRANCH"
-  if [[ -n "$RELEASE_TAG" ]]; then
-    ref="$RELEASE_TAG"
-  fi
-
-  info "Cloning SkillLink ($ref)..."
-  if ! git clone --depth 1 --branch "$ref" "$REPO_URL" "$CLONE_DIR" 2>&1; then
-    err "Failed to clone $REPO_URL (ref: $ref)."
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [[ ! -f "$script_dir/gradlew" ]]; then
+    err "--from-source requires running from the SkillLink repository root."
+    err "Could not find gradlew in: $script_dir"
     exit 1
   fi
-  ok "Repository cloned"
+  CLONE_DIR="$script_dir"
+  ok "Using local checkout: $CLONE_DIR"
 }
 
 build_distribution() {

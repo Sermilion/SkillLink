@@ -54,18 +54,17 @@ Specific release:
 curl -fsSL https://raw.githubusercontent.com/Sermilion/SkillLink/main/install.sh | bash -s -- --release v1.0.0
 ```
 
-From a local checkout (builds from source, requires JDK 21 and git):
+From a local checkout (builds from source, requires JDK 21):
 
 ```sh
-./install.sh --local
+./install.sh --from-source
 ```
 
 | Flag | Effect |
 | --- | --- |
-| `--from-source` | Clone and build from source instead of downloading a prebuilt archive. |
-| `--local` | Build from this checkout (implies `--from-source`). |
-| `--branch BRANCH` | Clone a specific branch for `--from-source` (default: main). |
-| `--release TAG` | Use a specific release tag for prebuilt or source installs. |
+| `--from-source` | Build from the local checkout instead of downloading a prebuilt archive. Requires JDK 21. |
+| `--local` | Same as `--from-source`. |
+| `--release TAG` | Use a specific release tag for prebuilt installs. |
 | `--install-dir DIR` | Override the distribution directory (default: `~/.skilllink/app`). |
 | `--bin-dir DIR` | Override the launcher directory (default: `~/.local/bin`). |
 | `--skip-launcher` | Install the distribution without creating launcher symlinks. |
@@ -91,7 +90,7 @@ Use the checked-in wrapper for build work:
 
 On Windows, run the same tasks through `gradlew.bat`. `check` covers all module checks and the included build. Format root and module files with `./gradlew spotlessApply`; format build-logic files with `./gradlew -p build-logic spotlessApply`.
 
-The build uses Gradle 9.8.0, Kotlin 2.4.20, JUnit 6.1.3, Spotless 8.10.3, ktlint 1.8.0, and Detekt 1.23.8. See [toolchain versions](docs/toolchain-versions.md) for current compatibility sources and wrapper provenance. The SL-1 [implementation notes](.feature-specs/SL-1-gradle-foundation/implementation-notes.md) retain the original bootstrap details. Configuration cache remains disabled pending validation.
+The build uses Gradle 9.8.0, Kotlin 2.4.20, JUnit 6.1.3, Spotless 8.10.3, ktlint 1.8.0, and Detekt 1.23.8. See [toolchain versions](docs/toolchain-versions.md) for current compatibility sources and wrapper provenance. The SL-1 [implementation notes](.feature-specs/done/SL-1-gradle-foundation/implementation-notes.md) retain the original bootstrap details. Configuration cache remains disabled pending validation.
 
 ## Continuous integration
 
@@ -123,6 +122,6 @@ References: [Compose native packaging](https://kotlinlang.org/docs/multiplatform
 
 ## Implementation specs
 
-- [SL-1: Gradle project and build conventions](.feature-specs/SL-1-gradle-foundation/spec.md) defines the build-logic, module builds, and verification requirements.
-- [SL-2: CLI skill installation and management](.feature-specs/SL-2-cli-skill-installation/spec.md) specifies `skill-link`, explicit agent selection, numbered listing, and management by skill name. Subtask 1 implements install, list, help, and version; management commands remain for subtask 2.
+- [SL-1: Gradle project and build conventions](.feature-specs/done/SL-1-gradle-foundation/spec.md) defines the build-logic, module builds, and verification requirements.
+- [SL-2: CLI skill installation and management](.feature-specs/done/SL-2-cli-skill-installation/spec.md) specifies `skill-link`, explicit agent selection, numbered listing, and management by skill name. Subtask 1 implements install, list, help, and version; management commands remain for subtask 2.
 - [Principle enforcement inventory](docs/PrincipleEnforcementInventory.md) maps implemented checks to their proving fixtures and separates review-only rules.

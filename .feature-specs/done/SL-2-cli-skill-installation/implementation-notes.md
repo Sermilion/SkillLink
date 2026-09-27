@@ -2,13 +2,13 @@
 
 ## Dependencies
 
-- SQLite access uses `org.xerial:sqlite-jdbc` (see `gradle/libs.versions.toml`). JDBC keeps persistence inside `infrastructure` without Room alpha alignment work.
+- SQLite access uses `org.xerial:sqlite-jdbc` (see `../../../gradle/libs.versions.toml`). JDBC keeps persistence inside `infrastructure` without Room alpha alignment work.
 - CLI parsing is implemented in the `cli` module without an additional parser dependency.
 
 ## Launcher tasks
 
 - `./gradlew :app:runSkillLinkCli --args="--help"` runs the CLI main class on the module runtime classpath.
-- `./gradlew :app:skillLinkCliDistribution` writes `app/build/skill-link-cli/bin/skill-link` and `skill-link.bat` plus `lib/` artifacts. JDK 21 is required to execute the distribution.
+- `./gradlew :app:skillLinkCliDistribution` writes `../../../app/build/skill-link-cli/bin/skill-link` and `skill-link.bat` plus `lib/` artifacts. JDK 21 is required to execute the distribution.
 
 ## Platform validation
 

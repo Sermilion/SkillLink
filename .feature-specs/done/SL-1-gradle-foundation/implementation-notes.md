@@ -24,7 +24,7 @@ Gradle 8.10.2 and Kotlin 2.0.21 are within the Kotlin Gradle plugin's documented
 
 ## Wrapper and bootstrap
 
-`gradlew`, `gradlew.bat`, and `gradle/wrapper/gradle-wrapper.jar` were downloaded from the official Gradle `v8.10.2` source tag. The wrapper JAR SHA-256 is `2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046`, matching Gradle's [published wrapper checksum](https://gradle.org/release-checksums/). The pinned binary distribution SHA-256 is `31c55713e40233a8303827ceb42ca48a47267a0ad4bab9177123121e71524c26`, matching the official release checksum page.
+`gradlew`, `gradlew.bat`, and `../../../gradle/wrapper/gradle-wrapper.jar` were downloaded from the official Gradle `v8.10.2` source tag. The wrapper JAR SHA-256 is `2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046`, matching Gradle's [published wrapper checksum](https://gradle.org/release-checksums/). The pinned binary distribution SHA-256 is `31c55713e40233a8303827ceb42ca48a47267a0ad4bab9177123121e71524c26`, matching the official release checksum page.
 
 JDK 21 must be installed locally for the initial checkout. Set `JAVA_HOME` to that JDK before invoking the wrapper. Gradle uses the JDK selected by `JAVA_HOME` to run; JVM compilation selects the local Java 21 toolchain. No toolchain download resolver is configured.
 
@@ -48,14 +48,14 @@ No build or test command ran during implementation. Validate through the checked
 
 | Criterion | Implementation files | Behavioral or inspection evidence for validate |
 | --- | --- | --- |
-| AC-001 | `settings.gradle.kts`, `build-logic/settings.gradle.kts`, all five module build scripts | Inspect included-build plugin resolution, module inclusion, and explicit project edges. `DependencyGuardFunctionalTest.acceptsSpecifiedGraph` exercises the permitted graph. |
-| AC-002 | `gradlew`, `gradlew.bat`, `gradle/wrapper/*`, `gradle/libs.versions.toml`, `README.md`, this file | Compare wrapper JAR and distribution hashes to the published checksums, inspect Unix mode `755`, catalog ownership, and JDK setup. Run wrapper commands on available operating systems. |
-| AC-003 | `build-logic/convention/build.gradle.kts`, convention plugin sources, `config/detekt/detekt.yml` | `JvmConventionFunctionalTest` checks target bytecode, JUnit discovery, source JAR, compiler warnings, and test failure. Quality fixtures check formatter and Detekt failures. Inspect lazy task registration and stricter validation setup. |
+| AC-001 | `../../../settings.gradle.kts`, `build-logic/settings.gradle.kts`, all five module build scripts | Inspect included-build plugin resolution, module inclusion, and explicit project edges. `DependencyGuardFunctionalTest.acceptsSpecifiedGraph` exercises the permitted graph. |
+| AC-002 | `gradlew`, `gradlew.bat`, `gradle/wrapper/*`, `../../../gradle/libs.versions.toml`, `README.md`, this file | Compare wrapper JAR and distribution hashes to the published checksums, inspect Unix mode `755`, catalog ownership, and JDK setup. Run wrapper commands on available operating systems. |
+| AC-003 | `../../../build-logic/convention/build.gradle.kts`, convention plugin sources, `config/detekt/detekt.yml` | `JvmConventionFunctionalTest` checks target bytecode, JUnit discovery, source JAR, compiler warnings, and test failure. Quality fixtures check formatter and Detekt failures. Inspect lazy task registration and stricter validation setup. |
 | AC-004 | Five module scripts, `ProductionDependencyRules.kt`, `VerifyProductionDependencies.kt` | `DependencyGuardFunctionalTest` accepts the full graph, rejects forbidden direct edges through five configuration routes, and ignores test-only edges. Confirm no artifact resolution in the guard. |
 | AC-005 | Root and included-build build scripts, `Quality.kt` | `RootLifecycleFunctionalTest` proves root check reaches module checks and included-build tasks, and propagates a convention-test failure. `QualityScriptCoverageFunctionalTest` covers root, module, and included-build scripts. |
 | AC-006 | Convention test sources and `TestKitSupport.kt` | Run the TestKit fixtures. Inspect their task outcomes, class files, test XML, source JAR, diagnostics, and unchanged source files. They do not match plugin source text. |
-| AC-007 | `README.md`, `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/code-principles.md`, `docs/PrincipleEnforcementInventory.md`, this file | Review the scope statements, check inventory, review-only rules, version sources, and absence of application behavior, packaging, Skill Bill dependencies, or user-state access. |
-| AC-008 | `.gitignore`, wrapper files, this file | Inspect nested build/cache and IDE exclusions, ensure wrapper files remain trackable, and confirm no JSON or schema export pattern is ignored. No existing user files were removed. |
+| AC-007 | `../../../README.md`, `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/code-principles.md`, `docs/PrincipleEnforcementInventory.md`, this file | Review the scope statements, check inventory, review-only rules, version sources, and absence of application behavior, packaging, Skill Bill dependencies, or user-state access. |
+| AC-008 | `../../../.gitignore`, wrapper files, this file | Inspect nested build/cache and IDE exclusions, ensure wrapper files remain trackable, and confirm no JSON or schema export pattern is ignored. No existing user files were removed. |
 
 Implementation phase evidence is limited to repository inspection, wrapper provenance and checksums, executable mode, and authored fixture/document contents. Compilation, test results, full-gate results, standalone checkout, and cross-platform behavior remain for validation. The supplied workflow has no build phase, so root `build` evidence remains pending runtime ownership.
 
@@ -106,6 +106,6 @@ JUnit reports contain seven dependency-guard cases, three JVM convention cases, 
 
 Repository inspection confirmed the wrapper JAR SHA-256 recorded above and Unix mode `755`. `git check-ignore` confirmed nested build output, Gradle/Kotlin caches, and IDE exclusions. The wrapper launchers, wrapper JAR, and a future `infrastructure/schemas/skilllink/1.json` export remain trackable. No existing user files were deleted.
 
-Logs remain in `/tmp/skilllink-sl1-root-check.log`, `/tmp/skilllink-sl1-lifecycle-recheck.log`, `/tmp/skilllink-sl1-root-recheck.log`, and `/tmp/skilllink-sl1-build-logic-check.log`. Final JUnit XML and HTML reports are under the standalone copy's `build-logic/convention/build` directory.
+Logs remain in `/tmp/skilllink-sl1-root-check.log`, `/tmp/skilllink-sl1-lifecycle-recheck.log`, `/tmp/skilllink-sl1-root-recheck.log`, and `/tmp/skilllink-sl1-build-logic-check.log`. Final JUnit XML and HTML reports are under the standalone copy's `../../../build-logic/convention/build` directory.
 
 No required validation checks remain failing. Windows and macOS execution remain unverified. Configuration-cache support remains unverified and disabled by default. Root `build` was not run because this runtime phase does not own build execution. No pack validation command or repository-root checklist ran.

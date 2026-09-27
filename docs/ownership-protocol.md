@@ -10,7 +10,7 @@ The CLI command set is `install <SKILL.md> --agent <agent>...`, `list`, `enable 
 
 ## Install (subtask 1)
 
-See [.feature-specs/SL-2-cli-skill-installation/ownership-protocol.md](../.feature-specs/SL-2-cli-skill-installation/ownership-protocol.md) for source removal and initial link creation primitives.
+See [.feature-specs/SL-2-cli-skill-installation/ownership-protocol.md](../.feature-specs/done/SL-2-cli-skill-installation/ownership-protocol.md) for source removal and initial link creation primitives.
 
 ## Enable and disable
 

@@ -87,7 +87,7 @@ The first release uses a CLI to import an explicitly selected local skill, list 
 
 The executable is `skill-link`. Installation takes a path to a skill file and an explicit selection of agents. The list shows numbered rows, but enable, disable, and remove take the skill name. Row numbers are display aids and cannot select a skill for mutation.
 
-[SL-2](../.feature-specs/SL-2-cli-skill-installation/spec.md) specifies the command syntax, output, exit codes, distribution, and recovery requirements. Its proposed defaults import the selected `SKILL.md` with its containing bundle and move removed skills to local trash. Those source and removal choices remain design defaults for review. An integrated editor is deferred to the desktop stage; users can identify the canonical path to edit with their own tools.
+[SL-2](../.feature-specs/done/SL-2-cli-skill-installation/spec.md) specifies the command syntax, output, exit codes, distribution, and recovery requirements. Its proposed defaults import the selected `SKILL.md` with its containing bundle and move removed skills to local trash. Those source and removal choices remain design defaults for review. An integrated editor is deferred to the desktop stage; users can identify the canonical path to edit with their own tools.
 
 ### Later desktop interface
 
