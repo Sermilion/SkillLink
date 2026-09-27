@@ -80,7 +80,7 @@ Use `skilllink` as the package root. Cluster by product responsibility within ea
 | `installation` | Import, per-agent links, collision handling, operation recovery |
 | `agent` | Agent identity, capabilities, global destination resolution |
 | `activity` | Recorded events, coverage, activity queries, later collection integrations |
-| `trash` | Later removal, retention, and restore behavior |
+| `trash` | Removed-content retention and later restore behavior |
 | `diagnostics` | Structured failure and recovery evidence |
 
 These are ownership boundaries, not a requirement to create empty packages. Keep model types beside their area. Do not collect unrelated types in global `model`, `service`, or `utils` packages.
@@ -190,7 +190,7 @@ Activity collectors, once researched, provide evidence through an application in
 
 Persist recorded events and coverage in the local database. Handle duplicate source events before deriving counts. A read event remains a read event unless an integration can establish stronger evidence. Recommendations consume recorded activity and coverage, never inferred zeros for untracked agents.
 
-Trash and undo remain optional follow-on work. They require owned-content moves, removal of owned links, and stored restore intent. Restore rechecks name and destination conflicts. Retention and permanent deletion remain product decisions; do not implement an automatic purge policy by assumption.
+Trash movement and owned-link removal are part of SL-2. Undo and restore remain optional follow-on work. Restore rechecks name and destination conflicts. Retention and permanent deletion remain product decisions; do not implement an automatic purge policy by assumption.
 
 ## Build and distribution
 

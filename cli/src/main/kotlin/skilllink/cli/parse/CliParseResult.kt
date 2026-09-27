@@ -14,10 +14,26 @@ sealed interface CliCommand {
         val skillFile: Path,
         val agents: Set<AgentId>,
     ) : CliCommand
+
+    data class Enable(
+        val skillName: String,
+        val agents: Set<AgentId>,
+    ) : CliCommand
+
+    data class Disable(
+        val skillName: String,
+        val agents: Set<AgentId>,
+    ) : CliCommand
+
+    data class Remove(
+        val skillName: String,
+    ) : CliCommand
 }
 
 sealed interface CliParseOutcome {
-    data class Parsed(val command: CliCommand) : CliParseOutcome
+    data class Parsed(
+        val command: CliCommand,
+    ) : CliParseOutcome
 
     sealed interface Failed : CliParseOutcome {
         data object InvalidArguments : Failed

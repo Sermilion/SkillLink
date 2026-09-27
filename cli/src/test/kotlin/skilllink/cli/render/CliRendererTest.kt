@@ -5,10 +5,13 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import skilllink.application.installation.model.AgentInstallationSnapshot
 import skilllink.application.installation.model.DesiredInstallationState
+import skilllink.application.installation.model.DisableSkillOutcome
+import skilllink.application.installation.model.EnableSkillOutcome
 import skilllink.application.installation.model.InstallSkillOutcome
 import skilllink.application.installation.model.ListSkillsOutcome
 import skilllink.application.installation.model.ManagedSkillSnapshot
 import skilllink.application.installation.model.ObservedLinkCondition
+import skilllink.application.installation.model.RemoveSkillOutcome
 import skilllink.cli.exit.CliExitCodes
 import skilllink.domain.agent.AgentId
 import skilllink.domain.library.NameComparisonKey
@@ -99,5 +102,46 @@ class CliRendererTest {
 
         assertEquals(CliExitCodes.IO_OR_PLATFORM, capability.exitCode)
         assertEquals(CliExitCodes.IO_OR_PLATFORM, storage.exitCode)
+    }
+
+    @Test
+    fun distinguishesManagementOutcomesAndChangedLinkReminders() {
+        val noOp = CliRenderer.renderEnable(EnableSkillOutcome.NoOp)
+        val notFound = CliRenderer.renderDisable(DisableSkillOutcome.Failed.NotFound)
+        val integrity = CliRenderer.renderEnable(EnableSkillOutcome.Failed.IntegrityFailure)
+        val conflict = CliRenderer.renderDisable(DisableSkillOutcome.Failed.DestinationConflict)
+        val blocked = CliRenderer.renderRemove(RemoveSkillOutcome.Failed.BlockedRecovery)
+        val completed =
+            CliRenderer.renderRemove(
+                RemoveSkillOutcome.Completed(
+                    skillName = "demo",
+                    trashPath = Path.of("/home/user/.skilllink/trash/op"),
+                    formerAgents = setOf(AgentId.Claude),
+                    cleanupPending = false,
+                ),
+            )
+        val pending =
+            CliRenderer.renderRemove(
+                RemoveSkillOutcome.Failed.CleanupPendingCommitted(
+                    skillName = "demo",
+                    trashPath = Path.of("/home/user/.skilllink/trash/op"),
+                ),
+            )
+
+        assertEquals(CliExitCodes.SUCCESS, noOp.exitCode)
+        assertTrue(noOp.stdout.contains("No changes"))
+        assertEquals(CliExitCodes.NOT_FOUND, notFound.exitCode)
+        assertTrue(notFound.stderr.contains("not found"))
+        assertEquals(CliExitCodes.IO_OR_PLATFORM, integrity.exitCode)
+        assertTrue(integrity.stderr.contains("missing or invalid"))
+        assertEquals(CliExitCodes.CONFLICT, conflict.exitCode)
+        assertTrue(conflict.stderr.contains("conflict"))
+        assertEquals(CliExitCodes.CONFLICT, blocked.exitCode)
+        assertTrue(blocked.stderr.contains("blocked"))
+        assertEquals(CliExitCodes.SUCCESS, completed.exitCode)
+        assertTrue(completed.stdout.contains("/home/user/.skilllink/trash/op"))
+        assertTrue(completed.stdout.contains("Restart affected agents"))
+        assertEquals(CliExitCodes.CLEANUP_PENDING, pending.exitCode)
+        assertTrue(pending.stderr.contains("Retained at"))
     }
 }

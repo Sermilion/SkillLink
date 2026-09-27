@@ -30,9 +30,11 @@ class SqliteCatalogStoreTest {
             operationId,
             id,
             "demo",
-            temp.resolve("source/demo"),
-            "fingerprint",
-            mapOf(AgentId.Claude to destination),
+            InstallTestInput(
+                temp.resolve("source/demo"),
+                "fingerprint",
+                mapOf(AgentId.Claude to destination),
+            ),
         )
         store.reserveSkill(
             id,
@@ -110,12 +112,92 @@ class SqliteCatalogStoreTest {
         assertThrows(IllegalStateException::class.java) {
             store.listActiveOrdered()
         }
+        assertThrows(IllegalStateException::class.java) {
+            store.beginInstall(
+                "blocked-operation",
+                SkillId("blocked"),
+                "blocked",
+                InstallTestInput(
+                    temp.resolve("source/blocked"),
+                    "fingerprint",
+                    emptyMap(),
+                ),
+            )
+        }
         DriverManager.getConnection("jdbc:sqlite:$db").use { connection ->
             connection.createStatement().use { statement ->
                 statement.executeQuery("SELECT version FROM schema_version").use { result ->
                     result.next()
                     assertEquals(99, result.getInt(1))
                 }
+                statement
+                    .executeQuery(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name='skills'",
+                    ).use { result ->
+                        assertEquals(false, result.next())
+                    }
+            }
+        }
+    }
+
+    @Test
+    fun failedMigrationPreservesOriginalStateAndBlocksMutation() {
+        val db = temp.resolve("failed-migration.db")
+        DriverManager.getConnection("jdbc:sqlite:$db").use { connection ->
+            connection.createStatement().use { statement ->
+                statement.execute("CREATE TABLE schema_version (version INTEGER NOT NULL)")
+                statement.execute("INSERT INTO schema_version VALUES (3)")
+                statement.execute(
+                    """
+                    CREATE TABLE operations (
+                        id TEXT PRIMARY KEY,
+                        skill_id TEXT NOT NULL,
+                        comparison_key TEXT NOT NULL,
+                        phase TEXT NOT NULL,
+                        source_fingerprint TEXT,
+                        operation_kind TEXT NOT NULL DEFAULT 'Install'
+                    )
+                    """.trimIndent(),
+                )
+                statement.execute(
+                    "INSERT INTO operations VALUES ('existing', 'skill', 'demo', 'Staging', 'fingerprint', 'Install')",
+                )
+            }
+        }
+
+        val store = SqliteCatalogStore(db)
+        assertThrows(IllegalStateException::class.java) {
+            store.findIncomplete()
+        }
+        assertThrows(IllegalStateException::class.java) {
+            store.beginInstall(
+                "blocked-after-failure",
+                SkillId("blocked"),
+                "blocked",
+                InstallTestInput(
+                    temp.resolve("source/blocked"),
+                    "fingerprint",
+                    emptyMap(),
+                ),
+            )
+        }
+        DriverManager.getConnection("jdbc:sqlite:$db").use { connection ->
+            connection.createStatement().use { statement ->
+                statement.executeQuery("SELECT version FROM schema_version").use { result ->
+                    result.next()
+                    assertEquals(3, result.getInt(1))
+                }
+                statement.executeQuery("SELECT id, source_fingerprint FROM operations").use { result ->
+                    assertEquals(true, result.next())
+                    assertEquals("existing", result.getString("id"))
+                    assertEquals("fingerprint", result.getString("source_fingerprint"))
+                }
+                statement
+                    .executeQuery(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name='skills'",
+                    ).use { result ->
+                        assertEquals(false, result.next())
+                    }
             }
         }
     }

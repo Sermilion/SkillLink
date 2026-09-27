@@ -7,10 +7,12 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import skilllink.application.installation.InstallSkillOperation
+import skilllink.application.installation.MutationGate
 import skilllink.application.installation.RecoveryCoordinator
 import skilllink.application.installation.model.InstallSkillOutcome
 import skilllink.application.installation.model.InstallSkillRequest
 import skilllink.application.library.ListManagedSkillsOperation
+import skilllink.domain.agent.AgentId
 import skilllink.infrastructure.agent.DefaultAgentRegistry
 import skilllink.infrastructure.agent.LinkCapabilityProbe
 import skilllink.infrastructure.diagnostics.FileDiagnostics
@@ -18,7 +20,6 @@ import skilllink.infrastructure.filesystem.NativeFilesystemAdapter
 import skilllink.infrastructure.layout.HomeLibraryLayout
 import skilllink.infrastructure.lock.FileWriterLock
 import skilllink.infrastructure.persistence.SqliteCatalogStore
-import skilllink.domain.agent.AgentId
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -32,7 +33,10 @@ class InstallSkillOperationTest {
         val source = createBundle("demo-skill", "payload")
         val fixture = fixture()
 
-        val outcome = fixture.operation.execute(InstallSkillRequest.NewImport(source.resolve("SKILL.md"), setOf(AgentId.Claude)))
+        val outcome =
+            fixture.operation.execute(
+                InstallSkillRequest.NewImport(source.resolve("SKILL.md"), setOf(AgentId.Claude)),
+            )
 
         assertTrue(outcome is InstallSkillOutcome.Completed)
         val completed = outcome as InstallSkillOutcome.Completed
@@ -40,11 +44,26 @@ class InstallSkillOperationTest {
         assertFalse(Files.exists(source))
         assertEquals(
             "payload",
-            Files.readString(fixture.layout.resolve().skillsRoot.resolve("demo-skill/nested.txt")),
+            Files.readString(
+                fixture.layout
+                    .resolve()
+                    .skillsRoot
+                    .resolve("demo-skill/nested.txt"),
+            ),
         )
-        val destination = fixture.registry.destinationFor(AgentId.Claude).root.resolve("demo-skill")
+        val destination =
+            fixture.registry
+                .destinationFor(AgentId.Claude)
+                .root
+                .resolve("demo-skill")
         assertTrue(Files.isSymbolicLink(destination))
-        assertEquals(fixture.layout.resolve().skillsRoot.resolve("demo-skill"), Files.readSymbolicLink(destination))
+        assertEquals(
+            fixture.layout
+                .resolve()
+                .skillsRoot
+                .resolve("demo-skill"),
+            Files.readSymbolicLink(destination),
+        )
         assertEquals(listOf("demo-skill"), fixture.store.listActiveOrdered().map { it.displayName })
         val listed = fixture.listOperation.execute()
         assertTrue(listed is skilllink.application.installation.model.ListSkillsOutcome.Rows)
@@ -80,7 +99,11 @@ class InstallSkillOperationTest {
         assumeTrue(LinkCapabilityProbe.current() is skilllink.application.ports.LinkCapability.DirectSymlink)
         val source = createBundle("occupied", "payload")
         val fixture = fixture()
-        val destination = fixture.registry.destinationFor(AgentId.Junie).root.resolve("occupied")
+        val destination =
+            fixture.registry
+                .destinationFor(AgentId.Junie)
+                .root
+                .resolve("occupied")
         Files.createDirectories(destination)
         Files.writeString(destination.resolve("foreign.txt"), "foreign")
 
@@ -94,7 +117,10 @@ class InstallSkillOperationTest {
         assertTrue(Files.exists(destination.resolve("foreign.txt")))
     }
 
-    private fun createBundle(name: String, payload: String): Path {
+    private fun createBundle(
+        name: String,
+        payload: String,
+    ): Path {
         val root = Files.createTempDirectory(temp, "attempt").resolve(name)
         Files.createDirectories(root)
         Files.writeString(root.resolve("SKILL.md"), "---\nname: $name\ndescription: demo\n---\n")
@@ -120,9 +146,7 @@ class InstallSkillOperationTest {
                 filesystem,
                 registry,
                 store,
-                FileWriterLock(layout.resolve().lockPath),
-                diagnostics,
-                recovery,
+                MutationGate(FileWriterLock(layout.resolve().lockPath), recovery),
             ),
             ListManagedSkillsOperation(layout, store, filesystem, FileWriterLock(layout.resolve().lockPath), recovery),
         )

@@ -9,9 +9,10 @@ import java.nio.file.Path
 class LinkCapabilityProbeTest {
     @Test
     fun reportsUnavailableWhenPlatformRejectsSymlinkCreation() {
-        val capability = LinkCapabilityProbe.probeForTest { _, _ ->
-            throw UnsupportedOperationException("symlink unavailable")
-        }
+        val capability =
+            LinkCapabilityProbe.probeForTest { _, _ ->
+                throw UnsupportedOperationException("symlink unavailable")
+            }
 
         assertEquals(LinkCapability.Unavailable, capability)
     }
@@ -20,7 +21,8 @@ class LinkCapabilityProbeTest {
     fun reportsDirectCapabilityWhenPlatformCreatesDirectorySymlinks() {
         val capability =
             LinkCapabilityProbe.probeForTest { link: Path, target: Path ->
-                java.nio.file.Files.createSymbolicLink(link, target)
+                java.nio.file.Files
+                    .createSymbolicLink(link, target)
             }
 
         assumeTrue(capability is LinkCapability.DirectSymlink)

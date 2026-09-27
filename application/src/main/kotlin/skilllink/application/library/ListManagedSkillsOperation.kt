@@ -1,5 +1,7 @@
 package skilllink.application.library
 
+import skilllink.application.installation.RecoveryCoordinator
+import skilllink.application.installation.RecoveryOutcome
 import skilllink.application.installation.model.ListSkillsOutcome
 import skilllink.application.installation.model.ManagedSkillSnapshot
 import skilllink.application.ports.CatalogPort
@@ -7,8 +9,6 @@ import skilllink.application.ports.FilesystemPort
 import skilllink.application.ports.LibraryLayoutPort
 import skilllink.application.ports.WriterLockOutcome
 import skilllink.application.ports.WriterLockPort
-import skilllink.application.installation.RecoveryCoordinator
-import skilllink.application.installation.RecoveryOutcome
 
 class ListManagedSkillsOperation(
     private val layout: LibraryLayoutPort,
@@ -17,40 +17,36 @@ class ListManagedSkillsOperation(
     private val writerLock: WriterLockPort,
     private val recovery: RecoveryCoordinator,
 ) {
-    fun execute(): ListSkillsOutcome {
-        val initialized =
-            try {
-                layout.isInitialized()
-            } catch (_: Exception) {
-                return ListSkillsOutcome.Failed.StorageInaccessible
-            }
-        if (!initialized) {
-            return ListSkillsOutcome.EmptyLibrary
+    fun execute(): ListSkillsOutcome =
+        try {
+            if (layout.isInitialized()) executeInitialized() else ListSkillsOutcome.EmptyLibrary
+        } catch (_: Exception) {
+            ListSkillsOutcome.Failed.StorageInaccessible
         }
+
+    private fun executeInitialized(): ListSkillsOutcome =
         when (val lock = writerLock.tryAcquire()) {
-            is WriterLockOutcome.Busy -> return ListSkillsOutcome.Failed.StorageInaccessible
-            is WriterLockOutcome.IoFailure -> return ListSkillsOutcome.Failed.StorageInaccessible
-            is WriterLockOutcome.Acquired ->
-                lock.handle.use {
-                    try {
-                        if (recovery.recoverIncomplete() is RecoveryOutcome.Blocked) {
-                            return ListSkillsOutcome.Failed.StorageInvalid
-                        }
-                        val rows = catalog.listActiveOrdered()
-                        if (rows.isEmpty()) {
-                            return ListSkillsOutcome.EmptyLibrary
-                        }
-                        val observed =
-                            rows.map { skill ->
-                                refreshObserved(skill)
-                            }
-                        return ListSkillsOutcome.Rows(observed)
-                    } catch (_: Exception) {
-                        return ListSkillsOutcome.Failed.StorageInvalid
-                    }
-                }
+            is WriterLockOutcome.Busy,
+            is WriterLockOutcome.IoFailure,
+            -> ListSkillsOutcome.Failed.StorageInaccessible
+
+            is WriterLockOutcome.Acquired -> lock.handle.use { readRows() }
         }
-    }
+
+    private fun readRows(): ListSkillsOutcome =
+        try {
+            if (recovery.recoverIncomplete() is RecoveryOutcome.Blocked) {
+                ListSkillsOutcome.Failed.StorageInvalid
+            } else {
+                catalog
+                    .listActiveOrdered()
+                    .takeIf(List<*>::isNotEmpty)
+                    ?.let { rows -> ListSkillsOutcome.Rows(rows.map(::refreshObserved)) }
+                    ?: ListSkillsOutcome.EmptyLibrary
+            }
+        } catch (_: Exception) {
+            ListSkillsOutcome.Failed.StorageInvalid
+        }
 
     private fun refreshObserved(skill: ManagedSkillSnapshot): ManagedSkillSnapshot {
         val installations =

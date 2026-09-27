@@ -1,8 +1,7 @@
 package skilllink.application.ports
 
-import skilllink.application.installation.model.DesiredInstallationState
+import skilllink.application.installation.model.AgentInstallationSnapshot
 import skilllink.application.installation.model.ManagedSkillSnapshot
-import skilllink.application.installation.model.ObservedLinkCondition
 import skilllink.domain.agent.AgentId
 import skilllink.domain.library.NameComparisonKey
 import skilllink.domain.library.SkillId
@@ -27,16 +26,18 @@ interface CatalogPort {
 
     fun clearReservation(skillId: SkillId)
 
-    fun updateObservedCondition(
+    fun findActiveSnapshot(skillId: SkillId): ManagedSkillSnapshot?
+
+    fun commitManagementState(
+        operationId: String,
         skillId: SkillId,
-        agent: AgentId,
-        observed: ObservedLinkCondition,
+        installations: List<AgentInstallationSnapshot>,
     )
 
-    fun recordInstallationIntent(
+    fun commitRemoval(
+        operationId: String,
         skillId: SkillId,
-        agent: AgentId,
-        destination: Path,
-        desired: DesiredInstallationState,
+        trashPath: Path,
+        formerAgents: Set<AgentId>,
     )
 }

@@ -22,7 +22,7 @@ See the [product idea](docs/idea.md) for the interface, installation model, usag
 - A desktop interface with a sidebar of managed skills and a main panel for reading and editing.
 - Git sources and update previews.
 - Recorded skill usage by agent and last use in a local SQLite database, where tracking is available.
-- Trash and undo for removed skills.
+- Trash restore and retention controls for removed skills.
 - Suggestions to disable unused skills, with clear tracking coverage.
 
 Unlinking a skill preserves its source. Usage tracking is optional, and missing tracking does not mean a skill is unused.
@@ -36,7 +36,7 @@ Unlinking a skill preserves its source. Usage tracking is optional, and missing 
 - [CLI installation research](docs/cli-installation-research.md) records integration evidence and open design questions.
 - [Toolchain versions](docs/toolchain-versions.md) records upgrade sources and verification.
 
-The existing desktop shell opens a two-panel library window and remains groundwork for a later release. The `skill-link` CLI implements install, list, help, and version for subtask 1; enable, disable, remove, and desktop editing are not implemented yet.
+The existing desktop shell opens a two-panel library window and remains groundwork for a later release. The `skill-link` CLI implements install, list, enable, disable, remove, help, and version. Management commands take skill names (case-insensitive), not list row numbers. Removed bundles remain under `~/.skilllink/trash/`; restore and permanent deletion are not available. Desktop editing is not implemented yet.
 
 Run the CLI through `./gradlew :app:runSkillLinkCli --args="--help"`. Build launcher scripts with `./gradlew :app:skillLinkCliDistribution` (outputs under `app/build/skill-link-cli/`). JDK 21 is required.
 

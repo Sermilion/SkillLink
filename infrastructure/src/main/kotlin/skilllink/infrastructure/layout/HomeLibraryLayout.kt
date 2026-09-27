@@ -14,6 +14,7 @@ class HomeLibraryLayout(
         return SkillLinkLayout(
             root = root,
             skillsRoot = root.resolve("skills"),
+            trashRoot = root.resolve("trash"),
             databasePath = root.resolve("skilllink.db"),
             diagnosticsRoot = root.resolve("diagnostics"),
             lockPath = root.resolve(".writer.lock"),

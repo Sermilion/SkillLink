@@ -3,7 +3,10 @@ package skilllink.domain.library
 import java.util.Locale
 
 sealed interface SkillNameOutcome {
-    data class Accepted(val displayName: String, val comparisonKey: NameComparisonKey) : SkillNameOutcome
+    data class Accepted(
+        val displayName: String,
+        val comparisonKey: NameComparisonKey,
+    ) : SkillNameOutcome
 
     sealed interface Rejected : SkillNameOutcome {
         data object Empty : Rejected
@@ -17,6 +20,9 @@ sealed interface SkillNameOutcome {
 }
 
 object SkillNamePolicy {
+    private const val MAX_NAME_LENGTH = 64
+    private const val ASCII_LIMIT = 0x7F
+
     private val portablePattern = Regex("^[a-z0-9]+(?:-[a-z0-9]+)*$")
     private val windowsReserved =
         setOf(
@@ -44,21 +50,28 @@ object SkillNamePolicy {
             "lpt9",
         )
 
-    fun validate(candidate: String): SkillNameOutcome {
-        if (candidate.isEmpty()) {
-            return SkillNameOutcome.Rejected.Empty
+    fun validate(candidate: String): SkillNameOutcome =
+        when {
+            candidate.isEmpty() -> SkillNameOutcome.Rejected.Empty
+            candidate.any { it.code > ASCII_LIMIT } -> SkillNameOutcome.Rejected.NonAscii
+            else -> validatePortableName(candidate)
         }
-        if (candidate.any { it.code > 0x7F }) {
-            return SkillNameOutcome.Rejected.NonAscii
-        }
+
+    private fun validatePortableName(candidate: String): SkillNameOutcome {
         val lowered = candidate.lowercase(Locale.ROOT)
-        if (lowered.length !in 1..64 || !portablePattern.matches(lowered)) {
-            return SkillNameOutcome.Rejected.InvalidGrammar
+        return when {
+            lowered.length !in 1..MAX_NAME_LENGTH || !portablePattern.matches(lowered) -> {
+                SkillNameOutcome.Rejected.InvalidGrammar
+            }
+
+            windowsReserved.contains(lowered) -> {
+                SkillNameOutcome.Rejected.WindowsReserved
+            }
+
+            else -> {
+                SkillNameOutcome.Accepted(candidate, NameComparisonKey(lowered))
+            }
         }
-        if (windowsReserved.contains(lowered)) {
-            return SkillNameOutcome.Rejected.WindowsReserved
-        }
-        return SkillNameOutcome.Accepted(displayName = candidate, comparisonKey = NameComparisonKey(lowered))
     }
 
     fun comparisonKeyForLookup(input: String): NameComparisonKey? =

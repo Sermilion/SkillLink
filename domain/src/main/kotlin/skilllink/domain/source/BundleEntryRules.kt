@@ -29,30 +29,39 @@ object BundleRootPolicy {
         agentRoots: Set<String>,
     ): BundleValidationOutcome {
         val normalized = bundleRoot.replace('\\', '/').trimEnd('/')
-        if (normalized.isEmpty() || normalized == "/" || normalized.matches(Regex("^[A-Za-z]:/?$"))) {
-            return BundleValidationOutcome.Rejected.UnsafeRoot
-        }
         val data = skillLinkDataRoot.replace('\\', '/').trimEnd('/')
         val home = System.getProperty("user.home")?.replace('\\', '/')?.trimEnd('/') ?: ""
         val configuredHome = data.substringBeforeLast('/', missingDelimiterValue = "")
-        if (
-            (home.isNotEmpty() && normalized == home) ||
-            (configuredHome.isNotEmpty() && normalized == configuredHome)
-        ) {
-            return BundleValidationOutcome.Rejected.UnsafeRoot
-        }
-        if (normalized.contains("/.git") || normalized.endsWith("/.git")) {
-            return BundleValidationOutcome.Rejected.RepositoryRoot
-        }
-        if (data.isNotEmpty() && (normalized == data || normalized.startsWith("$data/"))) {
-            return BundleValidationOutcome.Rejected.InsideSkillLinkData
-        }
-        for (agentRoot in agentRoots) {
-            val agent = agentRoot.replace('\\', '/').trimEnd('/')
-            if (agent.isNotEmpty() && (normalized == agent || normalized.startsWith("$agent/"))) {
-                return BundleValidationOutcome.Rejected.InsideAgentRoot
+        return when {
+            isUnsafeRoot(normalized) || normalized == home || normalized == configuredHome -> {
+                BundleValidationOutcome.Rejected.UnsafeRoot
+            }
+
+            normalized.contains("/.git") || normalized.endsWith("/.git") -> {
+                BundleValidationOutcome.Rejected.RepositoryRoot
+            }
+
+            isInside(normalized, data) -> {
+                BundleValidationOutcome.Rejected.InsideSkillLinkData
+            }
+
+            agentRoots.any { isInside(normalized, it.replace('\\', '/').trimEnd('/')) } -> {
+                BundleValidationOutcome.Rejected.InsideAgentRoot
+            }
+
+            else -> {
+                BundleValidationOutcome.Accepted
             }
         }
-        return BundleValidationOutcome.Accepted
     }
+
+    private fun isUnsafeRoot(normalized: String): Boolean =
+        normalized.isEmpty() ||
+            normalized == "/" ||
+            normalized.matches(Regex("^[A-Za-z]:/?$"))
+
+    private fun isInside(
+        path: String,
+        root: String,
+    ): Boolean = root.isNotEmpty() && (path == root || path.startsWith("$root/"))
 }

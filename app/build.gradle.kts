@@ -34,7 +34,11 @@ tasks.register<CreateStartScripts>("skillLinkCliStartScripts") {
     mainClass.set(skillLinkCliMainClass)
     classpath = files(tasks.named<Jar>("jar"), configurations.runtimeClasspath)
     dependsOn(tasks.named<Jar>("jar"))
-    outputDir = layout.buildDirectory.dir("skill-link-cli/bin").get().asFile
+    outputDir =
+        layout.buildDirectory
+            .dir("skill-link-cli/bin")
+            .get()
+            .asFile
     defaultJvmOpts = listOf("-Xmx256m")
 }
 

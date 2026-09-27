@@ -3,16 +3,20 @@ package skilllink.application.library
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import skilllink.application.installation.RecoveryCoordinator
-import skilllink.application.installation.model.DesiredInstallationState
+import skilllink.application.installation.model.AgentInstallationSnapshot
 import skilllink.application.installation.model.ListSkillsOutcome
 import skilllink.application.installation.model.ManagedSkillSnapshot
 import skilllink.application.installation.model.ObservedLinkCondition
+import skilllink.application.ports.CanonicalValidationOutcome
 import skilllink.application.ports.CatalogPort
 import skilllink.application.ports.CopyBundleOutcome
 import skilllink.application.ports.DiagnosticsPort
 import skilllink.application.ports.FilesystemPort
+import skilllink.application.ports.InstallOperationStart
 import skilllink.application.ports.LibraryLayoutPort
 import skilllink.application.ports.LinkOutcome
+import skilllink.application.ports.ManagementOperationStart
+import skilllink.application.ports.MoveToTrashOutcome
 import skilllink.application.ports.OperationJournalPort
 import skilllink.application.ports.OperationPaths
 import skilllink.application.ports.OperationPhase
@@ -51,7 +55,10 @@ class ListManagedSkillsOperationTest {
         assertEquals(ListSkillsOutcome.Failed.StorageInvalid, outcome)
     }
 
-    private fun operation(layoutInitialized: Boolean, catalog: RecordingCatalog): ListManagedSkillsOperation {
+    private fun operation(
+        layoutInitialized: Boolean,
+        catalog: RecordingCatalog,
+    ): ListManagedSkillsOperation {
         val journal = EmptyJournal()
         val filesystem = EmptyFilesystem()
         val recovery = RecoveryCoordinator(journal, filesystem, catalog, EmptyDiagnostics())
@@ -65,9 +72,20 @@ class ListManagedSkillsOperationTest {
     }
 }
 
-private class FixedLayout(private val initialized: Boolean) : LibraryLayoutPort {
+private val missingCanonical = CanonicalValidationOutcome.Invalid.Missing
+
+private class FixedLayout(
+    private val initialized: Boolean,
+) : LibraryLayoutPort {
     override fun resolve(): SkillLinkLayout =
-        SkillLinkLayout(Path.of("root"), Path.of("skills"), Path.of("db"), Path.of("diagnostics"), Path.of("lock"))
+        SkillLinkLayout(
+            Path.of("root"),
+            Path.of("skills"),
+            Path.of("trash"),
+            Path.of("db"),
+            Path.of("diagnostics"),
+            Path.of("lock"),
+        )
 
     override fun isInitialized(): Boolean = initialized
 }
@@ -91,7 +109,7 @@ private class RecordingCatalog(
     override fun listActiveOrdered(): List<ManagedSkillSnapshot> {
         listCalls++
         if (throwOnList) {
-            throw IllegalStateException("storage failure")
+            error("storage failure")
         }
         return emptyList()
     }
@@ -110,27 +128,30 @@ private class RecordingCatalog(
 
     override fun clearReservation(skillId: SkillId) = Unit
 
-    override fun updateObservedCondition(skillId: SkillId, agent: AgentId, observed: ObservedLinkCondition) = Unit
+    override fun findActiveSnapshot(skillId: SkillId): ManagedSkillSnapshot? = null
 
-    override fun recordInstallationIntent(
+    override fun commitManagementState(
+        operationId: String,
         skillId: SkillId,
-        agent: AgentId,
-        destination: Path,
-        desired: DesiredInstallationState,
+        installations: List<AgentInstallationSnapshot>,
+    ) = Unit
+
+    override fun commitRemoval(
+        operationId: String,
+        skillId: SkillId,
+        trashPath: Path,
+        formerAgents: Set<AgentId>,
     ) = Unit
 }
 
 private class EmptyJournal : OperationJournalPort {
-    override fun beginInstall(
-        operationId: String,
-        skillId: SkillId,
-        comparisonKey: String,
-        sourceRoot: Path,
-        sourceFingerprint: String,
-        agents: Map<AgentId, Path>,
-    ) = Unit
+    override fun beginInstall(start: InstallOperationStart) = Unit
 
-    override fun updatePhase(operationId: String, phase: OperationPhase, paths: OperationPaths) = Unit
+    override fun updatePhase(
+        operationId: String,
+        phase: OperationPhase,
+        paths: OperationPaths,
+    ) = Unit
 
     override fun findIncomplete(): List<OperationRecord> = emptyList()
 
@@ -139,34 +160,64 @@ private class EmptyJournal : OperationJournalPort {
     override fun markCommitted(operationId: String) = Unit
 
     override fun markCompleted(operationId: String) = Unit
+
+    override fun beginManagement(start: ManagementOperationStart) = Unit
 }
 
 private class EmptyFilesystem : FilesystemPort {
-    override fun inspectSource(skillFile: Path): SourceInspectionOutcome =
-        SourceInspectionOutcome.Invalid.NotSkillFile
+    override fun inspectSource(skillFile: Path): SourceInspectionOutcome = SourceInspectionOutcome.Invalid.NotSkillFile
 
-    override fun sourceFingerprint(sourceRoot: Path): String = ""
+    override fun copyBundleToStaging(
+        bundleRoot: Path,
+        stagingRoot: Path,
+    ): CopyBundleOutcome = CopyBundleOutcome.Failed.IoFailure
 
-    override fun copyBundleToStaging(bundleRoot: Path, stagingRoot: Path): CopyBundleOutcome =
-        CopyBundleOutcome.Failed.IoFailure
+    override fun publishCanonical(
+        stagingRoot: Path,
+        skillsRoot: Path,
+        comparisonKey: String,
+    ): PublishOutcome = PublishOutcome.Failed.IoFailure
 
-    override fun publishCanonical(stagingRoot: Path, skillsRoot: Path, comparisonKey: String): PublishOutcome =
-        PublishOutcome.Failed.IoFailure
+    override fun createOwnedLink(
+        canonicalPath: Path,
+        destination: Path,
+        agent: AgentId,
+    ): LinkOutcome = LinkOutcome.Failed.IoFailure
 
-    override fun createOwnedLink(canonicalPath: Path, destination: Path, agent: AgentId): LinkOutcome =
-        LinkOutcome.Failed.IoFailure
+    override fun removePathIfOwned(
+        path: Path,
+        expectedTarget: Path,
+        expectedIdentity: String?,
+    ): Boolean = true
 
-    override fun removePathIfOwned(path: Path, expectedTarget: Path): Boolean = true
+    override fun observeLink(
+        destination: Path,
+        canonicalPath: Path,
+    ): ObservedLinkCondition = ObservedLinkCondition.Missing
 
-    override fun observeLink(destination: Path, canonicalPath: Path): ObservedLinkCondition =
-        ObservedLinkCondition.Missing
+    override fun safeRemoveOriginal(
+        sourceRoot: Path,
+        fingerprint: String,
+    ): SafeRemovalOutcome = SafeRemovalOutcome.Unchanged
 
-    override fun safeRemoveOriginal(sourceRoot: Path, fingerprint: String): SafeRemovalOutcome =
-        SafeRemovalOutcome.Unchanged
+    override fun validateCanonicalBundle(canonicalPath: Path) = missingCanonical
+
+    override fun moveCanonicalToTrash(
+        canonicalPath: Path,
+        trashDestination: Path,
+    ): MoveToTrashOutcome = MoveToTrashOutcome.Failed.IoFailure
 }
 
 private class EmptyDiagnostics : DiagnosticsPort {
-    override fun record(eventCode: String, managedId: String?, detail: String) = Unit
+    override fun record(
+        eventCode: String,
+        managedId: String?,
+        detail: String,
+    ) = Unit
 
-    override fun reportSecondaryFailure(primaryCode: String, secondaryCode: String, detail: String) = Unit
+    override fun reportSecondaryFailure(
+        primaryCode: String,
+        secondaryCode: String,
+        detail: String,
+    ) = Unit
 }

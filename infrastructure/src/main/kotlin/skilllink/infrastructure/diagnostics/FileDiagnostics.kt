@@ -9,11 +9,19 @@ import java.time.Instant
 class FileDiagnostics(
     private val diagnosticsRoot: Path,
 ) : DiagnosticsPort {
-    override fun record(eventCode: String, managedId: String?, detail: String) {
+    override fun record(
+        eventCode: String,
+        managedId: String?,
+        detail: String,
+    ) {
         writeLine("event=$eventCode id=${managedId ?: "-"} detail=$detail")
     }
 
-    override fun reportSecondaryFailure(primaryCode: String, secondaryCode: String, detail: String) {
+    override fun reportSecondaryFailure(
+        primaryCode: String,
+        secondaryCode: String,
+        detail: String,
+    ) {
         writeLine("secondary primary=$primaryCode secondary=$secondaryCode detail=$detail")
     }
 

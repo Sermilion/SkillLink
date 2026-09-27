@@ -1,7 +1,10 @@
 package skilllink.domain.source
 
 sealed interface FrontmatterOutcome {
-    data class Parsed(val name: String, val description: String) : FrontmatterOutcome
+    data class Parsed(
+        val name: String,
+        val description: String,
+    ) : FrontmatterOutcome
 
     sealed interface Rejected : FrontmatterOutcome {
         data object MissingDelimiter : Rejected
@@ -21,59 +24,126 @@ sealed interface FrontmatterOutcome {
 }
 
 object FrontmatterReader {
-    fun parse(content: String): FrontmatterOutcome {
+    private const val FRONTMATTER_START = 3
+
+    fun parse(content: String): FrontmatterOutcome =
+        when (val block = frontmatterBlock(content)) {
+            null -> {
+                FrontmatterOutcome.Rejected.MissingDelimiter
+            }
+
+            else -> {
+                if (hasUnsafeConstruct(block)) {
+                    FrontmatterOutcome.Rejected.UnsafeConstruct
+                } else {
+                    when (val fields = readFields(block)) {
+                        is FieldReadOutcome.Rejected -> fields.reason
+                        is FieldReadOutcome.Parsed -> fields.toOutcome()
+                        else -> FrontmatterOutcome.Rejected.Malformed
+                    }
+                }
+            }
+        }
+
+    private fun frontmatterBlock(content: String): String? {
         if (!content.startsWith("---")) {
-            return FrontmatterOutcome.Rejected.MissingDelimiter
+            return null
         }
-        val end = content.indexOf("\n---", startIndex = 3)
-        if (end < 0) {
-            return FrontmatterOutcome.Rejected.MissingDelimiter
-        }
-        val block = content.substring(3, end).trim()
-        if (block.contains("!!") || block.contains("&") || block.contains("*") || block.contains("<<")) {
-            return FrontmatterOutcome.Rejected.UnsafeConstruct
-        }
+        val end = content.indexOf("\n---", startIndex = FRONTMATTER_START)
+        return if (end < 0) null else content.substring(FRONTMATTER_START, end).trim()
+    }
+
+    private fun hasUnsafeConstruct(block: String): Boolean = listOf("!!", "&", "*", "<<").any(block::contains)
+
+    private fun readFields(block: String): FieldReadOutcome {
         var name: String? = null
         var description: String? = null
         var nameCount = 0
         var descriptionCount = 0
+        var rejection: FrontmatterOutcome.Rejected? = null
         for (line in block.lineSequence()) {
             val trimmed = line.trim()
-            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
-                continue
-            }
-            val colon = trimmed.indexOf(':')
-            if (colon <= 0) {
-                return FrontmatterOutcome.Rejected.Malformed
-            }
-            val key = trimmed.substring(0, colon).trim()
-            val rawValue = trimmed.substring(colon + 1).trim()
-            if (rawValue.startsWith("{") || rawValue.startsWith("[") || rawValue.contains("\n")) {
-                return FrontmatterOutcome.Rejected.UnsafeConstruct
-            }
-            val value = rawValue.removeSurrounding("\"").removeSurrounding("'")
-            when (key) {
-                "name" -> {
-                    nameCount++
-                    name = value
+            if (rejection == null) {
+                when (val field = readField(trimmed)) {
+                    FieldReadOutcome.Skip -> {}
+
+                    is FieldReadOutcome.Rejected -> {
+                        rejection = field.reason
+                    }
+
+                    is FieldReadOutcome.Name -> {
+                        nameCount++
+                        name = field.value
+                    }
+
+                    is FieldReadOutcome.Description -> {
+                        descriptionCount++
+                        description = field.value
+                    }
+
+                    is FieldReadOutcome.Parsed -> {
+                        return field
+                    }
                 }
-                "description" -> {
-                    descriptionCount++
-                    description = value
-                }
             }
         }
-        if (nameCount > 1) {
-            return FrontmatterOutcome.Rejected.DuplicateName
+        return when {
+            rejection != null -> FieldReadOutcome.Rejected(rejection)
+            nameCount > 1 -> FieldReadOutcome.Rejected(FrontmatterOutcome.Rejected.DuplicateName)
+            descriptionCount > 1 -> FieldReadOutcome.Rejected(FrontmatterOutcome.Rejected.DuplicateDescription)
+            name == null -> FieldReadOutcome.Rejected(FrontmatterOutcome.Rejected.MissingName)
+            description.isNullOrEmpty() -> FieldReadOutcome.Rejected(FrontmatterOutcome.Rejected.MissingDescription)
+            else -> FieldReadOutcome.Parsed(name, description)
         }
-        if (descriptionCount > 1) {
-            return FrontmatterOutcome.Rejected.DuplicateDescription
-        }
-        val resolvedName = name ?: return FrontmatterOutcome.Rejected.MissingName
-        val resolvedDescription = description ?: return FrontmatterOutcome.Rejected.MissingDescription
-        if (resolvedDescription.isEmpty()) {
-            return FrontmatterOutcome.Rejected.MissingDescription
-        }
-        return FrontmatterOutcome.Parsed(resolvedName, resolvedDescription)
     }
+
+    private fun readField(trimmed: String): FieldReadOutcome =
+        when {
+            trimmed.isEmpty() || trimmed.startsWith("#") -> {
+                FieldReadOutcome.Skip
+            }
+
+            trimmed.indexOf(':') <= 0 -> {
+                FieldReadOutcome.Rejected(FrontmatterOutcome.Rejected.Malformed)
+            }
+
+            else -> {
+                val colon = trimmed.indexOf(':')
+                val rawValue = trimmed.substring(colon + 1).trim()
+                if (rawValue.startsWith("{") || rawValue.startsWith("[") || rawValue.contains("\n")) {
+                    FieldReadOutcome.Rejected(FrontmatterOutcome.Rejected.UnsafeConstruct)
+                } else {
+                    when (trimmed.substring(0, colon).trim()) {
+                        "name" -> FieldReadOutcome.Name(rawValue.unquote())
+                        "description" -> FieldReadOutcome.Description(rawValue.unquote())
+                        else -> FieldReadOutcome.Skip
+                    }
+                }
+            }
+        }
 }
+
+private sealed interface FieldReadOutcome {
+    data object Skip : FieldReadOutcome
+
+    data class Name(
+        val value: String,
+    ) : FieldReadOutcome
+
+    data class Description(
+        val value: String,
+    ) : FieldReadOutcome
+
+    data class Parsed(
+        val name: String?,
+        val description: String?,
+    ) : FieldReadOutcome {
+        fun toOutcome(): FrontmatterOutcome = FrontmatterOutcome.Parsed(name.orEmpty(), description.orEmpty())
+    }
+
+    data class Rejected(
+        val reason: FrontmatterOutcome.Rejected,
+    ) : FieldReadOutcome
+}
+
+private fun String.unquote(): String = removeSurrounding("\"").removeSurrounding("'")

@@ -10,7 +10,10 @@ class BundleRootPolicyTest {
         val data = "$home/.skilllink"
         val agent = "$home/.cursor/skills"
 
-        assertTrue(BundleRootPolicy.validateRoot("/", data, setOf(agent)) is BundleValidationOutcome.Rejected.UnsafeRoot)
+        assertTrue(
+            BundleRootPolicy.validateRoot("/", data, setOf(agent)) is
+                BundleValidationOutcome.Rejected.UnsafeRoot,
+        )
         assertTrue(
             BundleRootPolicy.validateRoot(home, data, setOf(agent)) is BundleValidationOutcome.Rejected.UnsafeRoot,
         )

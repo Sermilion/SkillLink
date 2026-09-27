@@ -30,7 +30,11 @@ class NativeFilesystemAdapterTest {
         Files.createDirectories(bundle.resolve("empty"))
         Files.writeString(bundle.resolve("run.sh"), "printf demo")
         bundle.resolve("run.sh").toFile().setExecutable(true)
-        val adapter = NativeFilesystemAdapter(HomeLibraryLayout(home), DefaultAgentRegistry(home))
+        val adapter =
+            NativeFilesystemAdapter(
+                HomeLibraryLayout(home),
+                DefaultAgentRegistry(home),
+            )
         val inspected = adapter.inspectSource(skillFile)
         assertTrue(inspected is SourceInspectionOutcome.Valid)
         val staging = temp.resolve("staging")
@@ -49,7 +53,11 @@ class NativeFilesystemAdapterTest {
         Files.createDirectories(bundle)
         val skillFile = bundle.resolve("SKILL.md")
         Files.writeString(skillFile, "no frontmatter")
-        val adapter = NativeFilesystemAdapter(HomeLibraryLayout(home), DefaultAgentRegistry(home))
+        val adapter =
+            NativeFilesystemAdapter(
+                HomeLibraryLayout(home),
+                DefaultAgentRegistry(home),
+            )
         val inspected = adapter.inspectSource(skillFile)
         assertTrue(inspected is SourceInspectionOutcome.Invalid.Frontmatter)
     }
@@ -61,7 +69,11 @@ class NativeFilesystemAdapterTest {
         Files.createDirectories(bundle.resolve(".git"))
         val skillFile = bundle.resolve("SKILL.md")
         Files.writeString(skillFile, "---\nname: demo\ndescription: demo\n---\n")
-        val adapter = NativeFilesystemAdapter(HomeLibraryLayout(home), DefaultAgentRegistry(home))
+        val adapter =
+            NativeFilesystemAdapter(
+                HomeLibraryLayout(home),
+                DefaultAgentRegistry(home),
+            )
 
         assertTrue(adapter.inspectSource(skillFile) is SourceInspectionOutcome.Invalid.BundleRoot)
     }
@@ -99,9 +111,15 @@ class NativeFilesystemAdapterTest {
             assumeTrue(false)
             return
         }
-        val adapter = NativeFilesystemAdapter(HomeLibraryLayout(home), DefaultAgentRegistry(home))
+        val adapter =
+            NativeFilesystemAdapter(
+                HomeLibraryLayout(home),
+                DefaultAgentRegistry(home),
+            )
 
-        assertTrue(adapter.inspectSource(bundle.resolve("SKILL.md")) is SourceInspectionOutcome.Invalid.UnsupportedEntry)
+        assertTrue(
+            adapter.inspectSource(bundle.resolve("SKILL.md")) is SourceInspectionOutcome.Invalid.UnsupportedEntry,
+        )
     }
 
     @Test
@@ -114,7 +132,7 @@ class NativeFilesystemAdapterTest {
         Files.writeString(destination, "foreign")
         val adapter = NativeFilesystemAdapter(HomeLibraryLayout(home), DefaultAgentRegistry(home))
 
-        val removed = adapter.removePathIfOwned(destination, canonical)
+        val removed = adapter.removePathIfOwned(destination, canonical, null)
 
         assertFalse(removed)
         assertTrue(Files.exists(destination))

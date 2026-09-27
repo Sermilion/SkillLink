@@ -7,6 +7,7 @@ import java.nio.file.Path
 
 enum class DesiredInstallationState {
     Enabled,
+    Disabled,
 }
 
 enum class ObservedLinkCondition {
@@ -65,12 +66,16 @@ sealed interface InstallSkillOutcome {
 
         data object Cancelled : Failed
 
-        data class CleanupPendingCommitted(val skillName: String) : Failed
+        data class CleanupPendingCommitted(
+            val skillName: String,
+        ) : Failed
     }
 }
 
 sealed interface ListSkillsOutcome {
-    data class Rows(val skills: List<ManagedSkillSnapshot>) : ListSkillsOutcome
+    data class Rows(
+        val skills: List<ManagedSkillSnapshot>,
+    ) : ListSkillsOutcome
 
     data object EmptyLibrary : ListSkillsOutcome
 

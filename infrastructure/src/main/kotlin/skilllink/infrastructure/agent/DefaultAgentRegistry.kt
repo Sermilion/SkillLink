@@ -21,6 +21,7 @@ class DefaultAgentRegistry(
                         home.resolve(".claude").resolve("skills")
                     }
                 }
+
                 AgentId.Codex -> {
                     val override = environment["CODEX_HOME"]
                     if (!override.isNullOrBlank()) {
@@ -29,8 +30,14 @@ class DefaultAgentRegistry(
                         home.resolve(".agents").resolve("skills")
                     }
                 }
-                AgentId.Junie -> home.resolve(".junie").resolve("skills")
-                AgentId.Cursor -> home.resolve(".cursor").resolve("skills")
+
+                AgentId.Junie -> {
+                    home.resolve(".junie").resolve("skills")
+                }
+
+                AgentId.Cursor -> {
+                    home.resolve(".cursor").resolve("skills")
+                }
             }
         val reserved =
             when (agent) {

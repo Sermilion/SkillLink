@@ -1,6 +1,8 @@
 package skilllink.app
 
 import skilllink.application.installation.InstallSkillOperation
+import skilllink.application.installation.ManageSkillsOperation
+import skilllink.application.installation.MutationGate
 import skilllink.application.installation.RecoveryCoordinator
 import skilllink.application.library.ListManagedSkillsOperation
 import skilllink.cli.SkillLinkCli
@@ -29,6 +31,7 @@ object SkillLinkRuntimeFactory {
                 val diagnostics = FileDiagnostics(paths.diagnosticsRoot)
                 val recovery = RecoveryCoordinator(store, filesystem, store, diagnostics)
                 val writerLock = FileWriterLock(paths.lockPath)
+                val gate = MutationGate(writerLock, recovery)
                 val install =
                     InstallSkillOperation(
                         layout,
@@ -36,9 +39,7 @@ object SkillLinkRuntimeFactory {
                         filesystem,
                         agents,
                         store,
-                        writerLock,
-                        diagnostics,
-                        recovery,
+                        gate,
                     )
                 val list =
                     ListManagedSkillsOperation(
@@ -48,12 +49,22 @@ object SkillLinkRuntimeFactory {
                         writerLock,
                         recovery,
                     )
-                install to list
+                val manage =
+                    ManageSkillsOperation(
+                        layout,
+                        store,
+                        filesystem,
+                        agents,
+                        store,
+                        gate,
+                    )
+                Triple(install, list, manage)
             }
         val cli =
             SkillLinkCli(
                 installOperationProvider = { services.value.first },
                 listOperationProvider = { services.value.second },
+                manageOperationProvider = { services.value.third },
             )
         return SkillLinkRuntime(cli)
     }

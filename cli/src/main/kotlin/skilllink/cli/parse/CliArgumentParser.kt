@@ -4,48 +4,122 @@ import skilllink.domain.agent.AgentId
 import java.nio.file.Path
 
 object CliArgumentParser {
-    fun parse(args: Array<String>, workingDirectory: Path): CliParseOutcome {
+    fun parse(
+        args: Array<String>,
+        workingDirectory: Path,
+    ): CliParseOutcome {
         val tokens = if (args.isEmpty()) emptyList() else tokenize(args)
-        if (tokens.isEmpty()) {
-            return CliParseOutcome.Parsed(CliCommand.Help)
+        return when {
+            tokens.isEmpty() -> CliParseOutcome.Parsed(CliCommand.Help)
+            else -> parseCommand(tokens, workingDirectory)
         }
-        return when (tokens[0]) {
+    }
+
+    private fun parseCommand(
+        tokens: List<String>,
+        workingDirectory: Path,
+    ): CliParseOutcome =
+        when (tokens[0]) {
             "--help", "-h", "help" -> CliParseOutcome.Parsed(CliCommand.Help)
             "--version", "-V", "version" -> CliParseOutcome.Parsed(CliCommand.Version)
             "list" -> CliParseOutcome.Parsed(CliCommand.List)
-            "install" -> {
-                if (tokens.size < 2) {
-                    return CliParseOutcome.Failed.InvalidArguments
-                }
-                val skillPath = workingDirectory.resolve(tokens[1]).normalize()
-                if (skillPath.fileName?.toString() != "SKILL.md") {
-                    return CliParseOutcome.Failed.InvalidArguments
-                }
-                var index = 2
-                val agents = linkedSetOf<AgentId>()
-                while (index < tokens.size) {
-                    when (tokens[index]) {
-                        "--agent" -> {
-                            index++
-                            if (index >= tokens.size) {
-                                return CliParseOutcome.Failed.InvalidArguments
-                            }
-                            val agent = AgentId.fromWire(tokens[index]) ?: return CliParseOutcome.Failed.UnknownAgent
-                            agents.add(agent)
-                            index++
-                        }
-                        else -> return CliParseOutcome.Failed.UnknownOption
-                    }
-                }
-                if (agents.isEmpty()) {
-                    CliParseOutcome.Failed.InvalidArguments
-                } else {
-                    CliParseOutcome.Parsed(CliCommand.Install(skillPath, agents))
-                }
-            }
-            "disable", "enable", "remove" -> CliParseOutcome.Failed.UnsupportedCommand
+            "install" -> parseInstall(tokens, workingDirectory)
+            "enable", "disable" -> parseManagement(tokens, allowAgents = true)
+            "remove" -> parseManagement(tokens, allowAgents = false)
             else -> CliParseOutcome.Failed.InvalidArguments
         }
+
+    private fun parseInstall(
+        tokens: List<String>,
+        workingDirectory: Path,
+    ): CliParseOutcome =
+        when {
+            tokens.size < 2 -> {
+                CliParseOutcome.Failed.InvalidArguments
+            }
+
+            workingDirectory
+                .resolve(tokens[1])
+                .normalize()
+                .fileName
+                ?.toString() != "SKILL.md" -> {
+                CliParseOutcome.Failed.InvalidArguments
+            }
+
+            else -> {
+                val agents = parseAgents(tokens, startIndex = 2, allowAgents = true)
+                when (agents) {
+                    is AgentParseOutcome.Failed -> {
+                        agents.failure
+                    }
+
+                    is AgentParseOutcome.Parsed -> {
+                        if (agents.agents.isEmpty()) {
+                            CliParseOutcome.Failed.InvalidArguments
+                        } else {
+                            CliParseOutcome.Parsed(
+                                CliCommand.Install(
+                                    workingDirectory.resolve(tokens[1]).normalize(),
+                                    agents.agents,
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+    private fun parseManagement(
+        tokens: List<String>,
+        allowAgents: Boolean,
+    ): CliParseOutcome =
+        when {
+            tokens.size < 2 -> {
+                CliParseOutcome.Failed.InvalidArguments
+            }
+
+            else -> {
+                when (val parsedAgents = parseAgents(tokens, 2, allowAgents)) {
+                    is AgentParseOutcome.Failed -> {
+                        parsedAgents.failure
+                    }
+
+                    is AgentParseOutcome.Parsed -> {
+                        when (tokens[0]) {
+                            "enable" -> CliParseOutcome.Parsed(CliCommand.Enable(tokens[1], parsedAgents.agents))
+                            "disable" -> CliParseOutcome.Parsed(CliCommand.Disable(tokens[1], parsedAgents.agents))
+                            "remove" -> CliParseOutcome.Parsed(CliCommand.Remove(tokens[1]))
+                            else -> CliParseOutcome.Failed.InvalidArguments
+                        }
+                    }
+                }
+            }
+        }
+
+    private fun parseAgents(
+        tokens: List<String>,
+        startIndex: Int,
+        allowAgents: Boolean,
+    ): AgentParseOutcome {
+        val agents = linkedSetOf<AgentId>()
+        var index = startIndex
+        var failure: CliParseOutcome.Failed? = null
+        while (index < tokens.size && failure == null) {
+            if (tokens[index] != "--agent") {
+                failure = CliParseOutcome.Failed.UnknownOption
+            } else if (!allowAgents || index + 1 >= tokens.size) {
+                failure = CliParseOutcome.Failed.InvalidArguments
+            } else {
+                val agent = AgentId.fromWire(tokens[index + 1])
+                if (agent == null) {
+                    failure = CliParseOutcome.Failed.UnknownAgent
+                } else {
+                    agents.add(agent)
+                    index += 2
+                }
+            }
+        }
+        return failure?.let(AgentParseOutcome::Failed) ?: AgentParseOutcome.Parsed(agents)
     }
 
     private fun tokenize(args: Array<String>): List<String> {
@@ -71,4 +145,14 @@ object CliArgumentParser {
         }
         return tokens
     }
+}
+
+private sealed interface AgentParseOutcome {
+    data class Parsed(
+        val agents: Set<AgentId>,
+    ) : AgentParseOutcome
+
+    data class Failed(
+        val failure: CliParseOutcome.Failed,
+    ) : AgentParseOutcome
 }

@@ -20,6 +20,11 @@
 
 Shared agent visibility: Junie and Cursor documented discovery paths may load skills from roots SkillLink did not link. Install help and README state this limitation.
 
+## Schema
+
+- SQLite schema version 4 adds `trash_records`, management journal fields (`operation_kind`, `management_snapshot`, `trash_path`), and `DesiredInstallationState.Disabled`.
+- Migration from version 3 preserves subtask 1 skills, installations, and journal rows.
+
 ## Validation gaps
 
 Full `./gradlew check`, packaged distribution smoke from outside the repository, and multi-process crash tests are owned by the validate phase. This note does not claim they have passed yet.

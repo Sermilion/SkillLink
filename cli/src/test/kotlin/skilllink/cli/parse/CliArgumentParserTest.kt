@@ -89,8 +89,45 @@ class CliArgumentParserTest {
     }
 
     @Test
-    fun rejectsManagementCommands() {
-        val outcome = CliArgumentParser.parse(arrayOf("disable", "demo"), workingDirectory)
-        assertTrue(outcome is CliParseOutcome.Failed.UnsupportedCommand)
+    fun parsesManagementByLiteralNameNotRowNumber() {
+        val outcome = CliArgumentParser.parse(arrayOf("disable", "3"), workingDirectory)
+        assertTrue(outcome is CliParseOutcome.Parsed)
+        val command = (outcome as CliParseOutcome.Parsed).command as CliCommand.Disable
+        assertEquals("3", command.skillName)
+    }
+
+    @Test
+    fun parsesAllNameBasedManagementCommandsWithExplicitAndDefaultAgents() {
+        val outcome =
+            CliArgumentParser.parse(
+                arrayOf("enable", "Code-Review", "--agent", "cursor"),
+                workingDirectory,
+            )
+        assertTrue(outcome is CliParseOutcome.Parsed)
+        val command = (outcome as CliParseOutcome.Parsed).command as CliCommand.Enable
+        assertEquals("Code-Review", command.skillName)
+        assertEquals(setOf(AgentId.Cursor), command.agents)
+
+        val disable = CliArgumentParser.parse(arrayOf("disable", "Code-Review"), workingDirectory)
+        assertTrue(disable is CliParseOutcome.Parsed)
+        val parsedDisable = disable as CliParseOutcome.Parsed
+        assertTrue(parsedDisable.command is CliCommand.Disable)
+        assertEquals(emptySet<AgentId>(), (parsedDisable.command as CliCommand.Disable).agents)
+
+        val remove = CliArgumentParser.parse(arrayOf("remove", "Code-Review"), workingDirectory)
+        assertTrue(remove is CliParseOutcome.Parsed)
+        val parsedRemove = remove as CliParseOutcome.Parsed
+        assertTrue(parsedRemove.command is CliCommand.Remove)
+        assertEquals("Code-Review", (parsedRemove.command as CliCommand.Remove).skillName)
+    }
+
+    @Test
+    fun rejectsRemoveWithAgentOptions() {
+        val outcome =
+            CliArgumentParser.parse(
+                arrayOf("remove", "demo", "--agent", "claude"),
+                workingDirectory,
+            )
+        assertTrue(outcome is CliParseOutcome.Failed.InvalidArguments)
     }
 }

@@ -22,6 +22,12 @@ Process-owned writer locking uses `FileChannel.tryLock` on `~/.skilllink/.writer
 
 Crash guarantees in tests target process termination and lock contention. Power-loss durability is not claimed.
 
+## Enable, disable, and remove
+
+- Enable recreates owned symlinks after conflict checks; disable unlinks owned symlinks only.
+- Remove moves canonical directories into `~/.skilllink/trash/<operation-id>/` with `Files.move` and no overwrite.
+- Management rollback restores link state from journal snapshots; foreign replacements block destructive rollback.
+
 ## Safe removal prerequisites
 
 Before deleting an imported bundle after commit:

@@ -12,8 +12,8 @@ import java.nio.file.StandardOpenOption
 class FileWriterLock(
     private val lockPath: Path,
 ) : WriterLockPort {
-    override fun tryAcquire(): WriterLockOutcome {
-        try {
+    override fun tryAcquire(): WriterLockOutcome =
+        runCatching {
             Files.createDirectories(lockPath.parent)
             val channel =
                 FileChannel.open(
@@ -21,27 +21,23 @@ class FileWriterLock(
                     StandardOpenOption.CREATE,
                     StandardOpenOption.WRITE,
                 )
-            val lock =
-                try {
-                    channel.tryLock()
-                } catch (_: OverlappingFileLockException) {
-                    channel.close()
-                    return WriterLockOutcome.Busy
-                }
-            if (lock == null) {
-                channel.close()
-                return WriterLockOutcome.Busy
-            }
-            return WriterLockOutcome.Acquired(
-                object : Closeable {
-                    override fun close() {
-                        lock.release()
-                        channel.close()
-                    }
-                },
-            )
-        } catch (_: Exception) {
-            return WriterLockOutcome.IoFailure
-        }
-    }
+            tryLock(channel)?.let { lock ->
+                WriterLockOutcome.Acquired(
+                    object : Closeable {
+                        override fun close() {
+                            lock.release()
+                            channel.close()
+                        }
+                    },
+                )
+            } ?: WriterLockOutcome.Busy
+        }.getOrElse { WriterLockOutcome.IoFailure }
 }
+
+private fun tryLock(channel: FileChannel) =
+    try {
+        channel.tryLock()
+    } catch (_: OverlappingFileLockException) {
+        channel.close()
+        null
+    }

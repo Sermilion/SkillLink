@@ -1,6 +1,8 @@
 package skilllink.domain.agent
 
-enum class AgentId(val wireValue: String) {
+enum class AgentId(
+    val wireValue: String,
+) {
     Claude("claude"),
     Codex("codex"),
     Junie("junie"),
