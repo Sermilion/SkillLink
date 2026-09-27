@@ -42,6 +42,7 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-disabled: ${{ runner.os == 'macOS' }}
       - name: Build and check on Linux
         if: runner.os == 'Linux'
         run: ./gradlew build --continue --stacktrace
