@@ -3,11 +3,8 @@ package skilllink.infrastructure.filesystem
 import skilllink.application.ports.SourceInspectionOutcome
 import skilllink.domain.library.SkillNameOutcome
 import skilllink.domain.library.SkillNamePolicy
-import skilllink.domain.source.BundleRootPolicy
 import skilllink.domain.source.FrontmatterOutcome
 import skilllink.domain.source.FrontmatterReader
-import skilllink.infrastructure.agent.DefaultAgentRegistry
-import skilllink.infrastructure.layout.HomeLibraryLayout
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -19,11 +16,7 @@ import java.security.MessageDigest
 import java.util.UUID
 
 internal object NativeFilesystemSupport {
-    fun inspectSource(
-        skillFile: Path,
-        layout: HomeLibraryLayout,
-        agentRegistry: DefaultAgentRegistry,
-    ): SourceInspectionOutcome {
+    fun inspectSource(skillFile: Path): SourceInspectionOutcome {
         val resolvedSkillFile = resolveSkillFile(skillFile)
         val bundleRoot = resolvedSkillFile?.parent
         return when {
@@ -31,16 +24,10 @@ internal object NativeFilesystemSupport {
                 SourceInspectionOutcome.Invalid.NotSkillFile
             }
 
-            !NativeFilesystemInspectionSupport.isValidBundleRoot(bundleRoot) -> {
-                SourceInspectionOutcome.Invalid.BundleRoot
-            }
-
             else -> {
                 NativeFilesystemInspectionSupport.inspectBundle(
                     bundleRoot,
                     resolvedSkillFile,
-                    layout,
-                    agentRegistry,
                 )
             }
         }
@@ -229,22 +216,12 @@ internal object NativeFilesystemSupport {
 }
 
 private object NativeFilesystemInspectionSupport {
-    fun isValidBundleRoot(bundleRoot: Path): Boolean =
-        Files.isDirectory(bundleRoot, LinkOption.NOFOLLOW_LINKS) &&
-            !Files.isSymbolicLink(bundleRoot) &&
-            !NativeFilesystemSupport.isInsideRepository(bundleRoot)
-
     fun inspectBundle(
         bundleRoot: Path,
         skillFile: Path,
-        layout: HomeLibraryLayout,
-        agentRegistry: DefaultAgentRegistry,
     ): SourceInspectionOutcome {
         val content = runCatching { Files.readString(skillFile) }.getOrNull()
         val frontmatter = content?.let(FrontmatterReader::parse)
-        val nameMatches =
-            frontmatter is FrontmatterOutcome.Parsed &&
-                bundleRoot.fileName.toString() == frontmatter.name
         return when {
             frontmatter !is FrontmatterOutcome.Parsed -> {
                 SourceInspectionOutcome.Invalid.Frontmatter
@@ -254,49 +231,26 @@ private object NativeFilesystemInspectionSupport {
                 SourceInspectionOutcome.Invalid.NamePolicy
             }
 
-            nameMatches && !isAllowedBundleRoot(bundleRoot, layout, agentRegistry) -> {
-                SourceInspectionOutcome.Invalid.BundleRoot
-            }
-
-            nameMatches && !NativeFilesystemSupport.validateTree(bundleRoot) -> {
-                SourceInspectionOutcome.Invalid.UnsupportedEntry
-            }
-
             else -> {
-                val singleFile = !nameMatches
+                val isBundle =
+                    bundleRoot.fileName.toString() == frontmatter.name
                 SourceInspectionOutcome.Valid(
-                    bundleRoot = bundleRoot,
+                    bundleRoot = if (isBundle) bundleRoot else skillFile,
                     displayName = frontmatter.name,
                     comparisonKey = frontmatter.name.lowercase(java.util.Locale.ROOT),
                     sourceFingerprint =
-                        if (singleFile) {
-                            val hash = MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(skillFile))
-                            "f:${skillFile.fileName}:${hash.joinToString("") { "%02x".format(it) }}"
-                        } else {
+                        if (isBundle) {
                             NativeFilesystemSupport.fingerprint(bundleRoot)
+                        } else {
+                            val hash =
+                                MessageDigest
+                                    .getInstance("SHA-256")
+                                    .digest(Files.readAllBytes(skillFile))
+                            "f:${skillFile.fileName}:${hash.joinToString("") { "%02x".format(it) }}"
                         },
-                    singleFileImport = singleFile,
                 )
             }
         }
-    }
-
-    private fun isAllowedBundleRoot(
-        bundleRoot: Path,
-        layout: HomeLibraryLayout,
-        agentRegistry: DefaultAgentRegistry,
-    ): Boolean {
-        val roots =
-            agentRegistry
-                .allAgentRoots()
-                .map(NativeFilesystemSupport::comparisonPath)
-                .map { it.toString() }
-                .toSet()
-        return BundleRootPolicy.validateRoot(
-            bundleRoot.toString(),
-            NativeFilesystemSupport.comparisonPath(layout.resolve().root).toString(),
-            roots,
-        ) is skilllink.domain.source.BundleValidationOutcome.Accepted
     }
 }
 

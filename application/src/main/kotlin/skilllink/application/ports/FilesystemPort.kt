@@ -52,7 +52,6 @@ sealed interface SourceInspectionOutcome {
         val displayName: String,
         val comparisonKey: String,
         val sourceFingerprint: String,
-        val singleFileImport: Boolean = false,
     ) : SourceInspectionOutcome
 
     sealed interface Invalid : SourceInspectionOutcome {

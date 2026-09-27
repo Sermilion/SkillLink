@@ -12,23 +12,20 @@ import skilllink.application.ports.SourceInspectionOutcome
 import skilllink.domain.agent.AgentId
 import skilllink.domain.library.SkillNameOutcome
 import skilllink.domain.library.SkillNamePolicy
-import skilllink.domain.source.BundleRootPolicy
 import skilllink.domain.source.FrontmatterOutcome
 import skilllink.domain.source.FrontmatterReader
-import skilllink.infrastructure.agent.DefaultAgentRegistry
-import skilllink.infrastructure.layout.HomeLibraryLayout
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.security.MessageDigest
 import java.util.Locale
 import java.util.UUID
 
-class NativeFilesystemAdapter(
-    private val layout: HomeLibraryLayout = HomeLibraryLayout(),
-    private val agentRegistry: DefaultAgentRegistry = DefaultAgentRegistry(),
-) : FilesystemPort {
+class NativeFilesystemAdapter : FilesystemPort {
     override fun inspectSource(skillFile: Path): SourceInspectionOutcome =
-        NativeFilesystemSupport.inspectSource(skillFile, layout, agentRegistry)
+        NativeFilesystemSupport.inspectSource(
+            skillFile,
+        )
 
     override fun copyBundleToStaging(
         bundleRoot: Path,
@@ -206,24 +203,31 @@ class NativeFilesystemAdapter(
         sourceRoot: Path,
         fingerprint: String,
     ): SafeRemovalOutcome {
-        val quarantine = sourceRoot.resolveSibling("${sourceRoot.fileName}.skilllink-removal-${UUID.randomUUID()}")
+        val quarantine =
+            sourceRoot.resolveSibling(
+                "${sourceRoot.fileName}.skilllink-removal-${UUID.randomUUID()}",
+            )
         return when {
             !Files.exists(sourceRoot, LinkOption.NOFOLLOW_LINKS) -> {
                 SafeRemovalOutcome.Unchanged
             }
 
-            NativeFilesystemSupport.fingerprint(sourceRoot) != fingerprint -> {
+            currentFingerprint(sourceRoot) != fingerprint -> {
                 SafeRemovalOutcome.Blocked
             }
 
             else -> {
                 runCatching {
                     Files.move(sourceRoot, quarantine)
-                    if (NativeFilesystemSupport.fingerprint(quarantine) != fingerprint) {
+                    if (currentFingerprint(quarantine) != fingerprint) {
                         Files.move(quarantine, sourceRoot)
                         SafeRemovalOutcome.Blocked
                     } else {
-                        NativeFilesystemSupport.removeRecursive(quarantine)
+                        if (Files.isDirectory(quarantine, LinkOption.NOFOLLOW_LINKS)) {
+                            NativeFilesystemSupport.removeRecursive(quarantine)
+                        } else {
+                            Files.deleteIfExists(quarantine)
+                        }
                         SafeRemovalOutcome.Removed
                     }
                 }.getOrElse {
@@ -238,5 +242,16 @@ class NativeFilesystemAdapter(
         }
     }
 }
+
+private fun currentFingerprint(path: Path): String =
+    if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
+        NativeFilesystemSupport.fingerprint(path)
+    } else {
+        val hash =
+            MessageDigest
+                .getInstance("SHA-256")
+                .digest(Files.readAllBytes(path))
+        "f:${path.fileName}:${hash.joinToString("") { "%02x".format(it) }}"
+    }
 
 internal fun NativeFilesystemAdapter.sourceFingerprint(root: Path) = NativeFilesystemSupport.fingerprint(root)

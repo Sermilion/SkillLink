@@ -58,15 +58,15 @@ private fun prepareInstall(
 
         else -> {
             val effectiveRoot =
-                if (inspected.singleFileImport) {
+                if (Files.isDirectory(inspected.bundleRoot)) {
+                    inspected.bundleRoot
+                } else {
                     val paths = operation.layout.resolve()
                     val opId = UUID.randomUUID().toString()
                     val tempBundle = paths.root.resolve("staging").resolve("$opId-bundle")
                     Files.createDirectories(tempBundle)
                     Files.copy(import.skillFile, tempBundle.resolve("SKILL.md"))
                     tempBundle
-                } else {
-                    inspected.bundleRoot
                 }
             reserveAndCopy(operation, import, inspected, name, effectiveRoot)
         }
