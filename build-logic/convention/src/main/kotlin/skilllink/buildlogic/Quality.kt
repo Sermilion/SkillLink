@@ -1,11 +1,13 @@
 package skilllink.buildlogic
 
 import com.diffplug.gradle.spotless.SpotlessExtension
+import com.diffplug.spotless.LineEnding
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.api.Project
 
 internal fun Project.configureQualityChecks() {
   extensions.configure(SpotlessExtension::class.java) { spotless ->
+    spotless.lineEndings = LineEnding.UNIX
     spotless.kotlin { kotlin ->
       kotlin.target("src/**/*.kt")
       kotlin.ktlint(catalogVersion("ktlint"))

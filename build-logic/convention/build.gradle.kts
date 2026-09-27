@@ -1,3 +1,4 @@
+import com.diffplug.spotless.LineEnding
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.jvm.toolchain.JavaLanguageVersion
@@ -78,6 +79,7 @@ tasks.withType<Test>().configureEach {
 }
 
 spotless {
+  lineEndings = LineEnding.UNIX
   kotlin {
     target("src/**/*.kt")
     ktlint(libs.versions.ktlint.get())

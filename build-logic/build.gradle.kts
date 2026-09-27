@@ -1,3 +1,5 @@
+import com.diffplug.spotless.LineEnding
+
 plugins {
   base
   alias(libs.plugins.kotlin.jvm) apply false
@@ -6,6 +8,7 @@ plugins {
 }
 
 spotless {
+  lineEndings = LineEnding.UNIX
   kotlinGradle {
     target(
       fileTree(rootDir) {
