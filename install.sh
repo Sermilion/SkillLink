@@ -160,6 +160,14 @@ host_token() {
   printf '%s-%s' "$os" "$arch"
 }
 
+release_asset_token() {
+  if [[ "$(host_os)" == "macos" ]]; then
+    printf 'macos'
+  else
+    host_token
+  fi
+}
+
 resolve_install_source() {
   if [[ "$INSTALL_SOURCE" != "auto" ]]; then
     return 0
@@ -284,8 +292,9 @@ verify_sha256() {
 install_prebuilt() {
   check_prebuilt_dependencies || exit 1
 
-  local token tag asset_name
+  local token artifact_token tag asset_name
   token="$(host_token)"
+  artifact_token="$(release_asset_token)"
   if ! tag="$(resolve_release_tag)"; then
     warn "No releases found. Falling back to --from-source build."
     INSTALL_SOURCE="source"
@@ -296,10 +305,10 @@ install_prebuilt() {
 
   info "Installing prebuilt skill-link CLI ($tag) for $token"
 
-  local supported_tokens="linux-x64 macos-arm64 macos-x64 windows-x64"
+  local supported_tokens="linux-x64 macos windows-x64"
   local found=0
   for t in $supported_tokens; do
-    if [[ "$token" == "$t" ]]; then
+    if [[ "$artifact_token" == "$t" ]]; then
       found=1
       break
     fi
@@ -314,7 +323,7 @@ install_prebuilt() {
     return $?
   fi
 
-  asset_name="skill-link-cli-${token}.tar.gz"
+  asset_name="skill-link-cli-${artifact_token}.tar.gz"
 
   local tmpdir
   tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/skilllink-install.XXXXXX")"

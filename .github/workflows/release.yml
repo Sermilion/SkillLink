@@ -27,9 +27,7 @@ jobs:
         include:
           - platform: linux-x64
             runner: ubuntu-24.04
-          - platform: macos-arm64
-            runner: [self-hosted, macOS, ARM64, skilllink]
-          - platform: macos-x64
+          - platform: macos
             runner: [self-hosted, macOS, ARM64, skilllink]
           - platform: windows-x64
             runner: windows-2022
@@ -188,7 +186,7 @@ jobs:
         run: |
           set -euo pipefail
           expected_assets=()
-          for platform in linux-x64 macos-arm64 macos-x64 windows-x64; do
+          for platform in linux-x64 macos windows-x64; do
             expected_assets+=(
               "skill-link-cli-${platform}.tar.gz"
               "skill-link-cli-${platform}.tar.gz.sha256"
@@ -224,7 +222,7 @@ jobs:
         run: |
           set -euo pipefail
           assets=()
-          for platform in linux-x64 macos-arm64 macos-x64 windows-x64; do
+          for platform in linux-x64 macos windows-x64; do
             assets+=(
               "dist/skill-link-cli-${platform}.tar.gz"
               "dist/skill-link-cli-${platform}.tar.gz.sha256"

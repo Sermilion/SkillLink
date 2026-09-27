@@ -31,7 +31,7 @@ The workflow uses pinned action commits and a read-only repository token. Pull r
 
 ### CLI releases
 
-[Release](../.github/workflows/release.yml) builds and checksum-verifies CLI archives for Linux x64, macOS ARM64, macOS x64, and Windows x64. Push a `vX.Y.Z` tag to publish a GitHub release after all four builds and the release check gate pass:
+[Release](../.github/workflows/release.yml) builds and checksum-verifies CLI archives for Linux x64, macOS, and Windows x64. Push a `vX.Y.Z` tag to publish a GitHub release after all three builds and the release check gate pass:
 
 ```sh
 git tag v0.1.0
