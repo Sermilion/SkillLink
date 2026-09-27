@@ -71,6 +71,16 @@ From a local checkout (builds from source, requires JDK 21):
 
 If no prebuilt archive is available for the current platform, the installer falls back to `--from-source` automatically. After installation, verify with `skill-link --version`.
 
+## Optional agent helper skill
+
+The repository includes [`skills/skill-link-operations/SKILL.md`](skills/skill-link-operations/SKILL.md), an opt-in helper for agents that need to guide SkillLink installs and removals. It is not installed automatically and requires confirmation before every mutation.
+
+Install it explicitly for selected agents:
+
+```sh
+skill-link install skills/skill-link-operations/SKILL.md --agent claude --agent codex
+```
+
 The [release workflow](.github/workflows/release.yml) builds CLI archives for linux-x64, macos-arm64, macos-x64, and windows-x64 on each tagged release.
 
 Run the CLI through `./gradlew :app:runSkillLinkCli --args="--help"`. Build launcher scripts with `./gradlew :app:skillLinkCliDistribution` (outputs under `app/build/skill-link-cli/`). JDK 21 is required.
