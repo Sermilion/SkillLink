@@ -4,8 +4,8 @@ import skilllink.application.ports.WriterLockOutcome
 import skilllink.application.ports.WriterLockPort
 
 class MutationGate(
-    private val writerLock: WriterLockPort,
-    internal val recovery: RecoveryCoordinator,
+  private val writerLock: WriterLockPort,
+  internal val recovery: RecoveryCoordinator,
 ) {
-    fun tryAcquire(): WriterLockOutcome = writerLock.tryAcquire()
+  fun tryAcquire(): WriterLockOutcome = writerLock.tryAcquire()
 }

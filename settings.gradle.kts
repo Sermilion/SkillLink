@@ -1,19 +1,19 @@
 pluginManagement {
-    includeBuild("build-logic") {
-        name = "build-logic"
-    }
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
-    }
+  includeBuild("build-logic") {
+    name = "build-logic"
+  }
+  repositories {
+    gradlePluginPortal()
+    mavenCentral()
+  }
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        mavenCentral()
-        google()
-    }
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositories {
+    mavenCentral()
+    google()
+  }
 }
 
 rootProject.name = "skilllink"

@@ -6,18 +6,18 @@ import skilllink.cli.exit.CliExitCodes
 import java.nio.file.Path
 
 class SkillLinkCliTest {
-    @Test
-    fun mapsInvalidStorageInitializationToIoFailureForList() {
-        val cli =
-            SkillLinkCli(
-                installOperationProvider = { error("install is not used") },
-                listOperationProvider = { error("invalid database") },
-                manageOperationProvider = { error("manage is not used") },
-                workingDirectory = Path.of("/tmp"),
-            )
+  @Test
+  fun mapsInvalidStorageInitializationToIoFailureForList() {
+    val cli =
+      SkillLinkCli(
+        installOperationProvider = { error("install is not used") },
+        listOperationProvider = { error("invalid database") },
+        manageOperationProvider = { error("manage is not used") },
+        workingDirectory = Path.of("/tmp"),
+      )
 
-        val outcome = cli.run(arrayOf("list"))
+    val outcome = cli.run(arrayOf("list"))
 
-        assertEquals(CliExitCodes.IO_OR_PLATFORM, outcome.exitCode)
-    }
+    assertEquals(CliExitCodes.IO_OR_PLATFORM, outcome.exitCode)
+  }
 }

@@ -11,42 +11,42 @@ import skilllink.application.ports.OperationJournalPort
 import skilllink.application.ports.WriterLockOutcome
 
 class InstallSkillOperation(
-    internal val layout: LibraryLayoutPort,
-    internal val catalog: CatalogPort,
-    internal val filesystem: FilesystemPort,
-    internal val agents: AgentRegistryPort,
-    internal val journal: OperationJournalPort,
-    internal val gate: MutationGate,
+  internal val layout: LibraryLayoutPort,
+  internal val catalog: CatalogPort,
+  internal val filesystem: FilesystemPort,
+  internal val agents: AgentRegistryPort,
+  internal val journal: OperationJournalPort,
+  internal val gate: MutationGate,
 ) {
-    internal val recovery: RecoveryCoordinator
-        get() = gate.recovery
+  internal val recovery: RecoveryCoordinator
+    get() = gate.recovery
 
-    fun execute(request: InstallSkillRequest): InstallSkillOutcome =
-        (request as? InstallSkillRequest.NewImport)
-            ?.takeUnless { it.agents.isEmpty() }
-            ?.let(::executeImport)
-            ?: InstallSkillOutcome.Failed.InvalidArguments
+  fun execute(request: InstallSkillRequest): InstallSkillOutcome =
+    (request as? InstallSkillRequest.NewImport)
+      ?.takeUnless { it.agents.isEmpty() }
+      ?.let(::executeImport)
+      ?: InstallSkillOutcome.Failed.InvalidArguments
 
-    private fun executeImport(import: InstallSkillRequest.NewImport): InstallSkillOutcome =
-        when (val lock = gate.tryAcquire()) {
-            is WriterLockOutcome.Busy -> {
-                InstallSkillOutcome.Failed.WriterBusy
-            }
+  private fun executeImport(import: InstallSkillRequest.NewImport): InstallSkillOutcome =
+    when (val lock = gate.tryAcquire()) {
+      is WriterLockOutcome.Busy -> {
+        InstallSkillOutcome.Failed.WriterBusy
+      }
 
-            is WriterLockOutcome.IoFailure -> {
-                InstallSkillOutcome.Failed.IoFailure
-            }
+      is WriterLockOutcome.IoFailure -> {
+        InstallSkillOutcome.Failed.IoFailure
+      }
 
-            is WriterLockOutcome.Acquired -> {
-                lock.handle.use {
-                    if (recovery.recoverIncomplete() is RecoveryOutcome.Blocked) {
-                        InstallSkillOutcome.Failed.BlockedRecovery
-                    } else {
-                        runInstall(import)
-                    }
-                }
-            }
+      is WriterLockOutcome.Acquired -> {
+        lock.handle.use {
+          if (recovery.recoverIncomplete() is RecoveryOutcome.Blocked) {
+            InstallSkillOutcome.Failed.BlockedRecovery
+          } else {
+            runInstall(import)
+          }
         }
+      }
+    }
 
-    private fun runInstall(import: InstallSkillRequest.NewImport): InstallSkillOutcome = runInstallAttempt(this, import)
+  private fun runInstall(import: InstallSkillRequest.NewImport): InstallSkillOutcome = runInstallAttempt(this, import)
 }

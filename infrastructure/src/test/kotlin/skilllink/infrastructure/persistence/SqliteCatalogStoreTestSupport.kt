@@ -8,47 +8,47 @@ import skilllink.domain.library.SkillId
 import java.nio.file.Path
 
 data class InstallTestInput(
-    val sourceRoot: Path,
-    val sourceFingerprint: String,
-    val agents: Map<AgentId, Path>,
+  val sourceRoot: Path,
+  val sourceFingerprint: String,
+  val agents: Map<AgentId, Path>,
 )
 
 data class ManagementTestInput(
-    val canonicalPath: Path,
-    val agentDestinations: Map<AgentId, Path>,
-    val managementSnapshot: String,
+  val canonicalPath: Path,
+  val agentDestinations: Map<AgentId, Path>,
+  val managementSnapshot: String,
 )
 
 internal fun SqliteCatalogStore.beginInstall(
-    operationId: String,
-    skillId: SkillId,
-    comparisonKey: String,
-    input: InstallTestInput,
+  operationId: String,
+  skillId: SkillId,
+  comparisonKey: String,
+  input: InstallTestInput,
 ) = beginInstall(
-    InstallOperationStart(
-        operationId,
-        skillId,
-        comparisonKey,
-        input.sourceRoot,
-        input.sourceFingerprint,
-        input.agents,
-    ),
+  InstallOperationStart(
+    operationId,
+    skillId,
+    comparisonKey,
+    input.sourceRoot,
+    input.sourceFingerprint,
+    input.agents,
+  ),
 )
 
 internal fun SqliteCatalogStore.beginManagement(
-    operationId: String,
-    kind: OperationKind,
-    skillId: SkillId,
-    comparisonKey: String,
-    input: ManagementTestInput,
+  operationId: String,
+  kind: OperationKind,
+  skillId: SkillId,
+  comparisonKey: String,
+  input: ManagementTestInput,
 ) = beginManagement(
-    ManagementOperationStart(
-        operationId,
-        kind,
-        skillId,
-        comparisonKey,
-        input.canonicalPath,
-        input.agentDestinations,
-        input.managementSnapshot,
-    ),
+  ManagementOperationStart(
+    operationId,
+    kind,
+    skillId,
+    comparisonKey,
+    input.canonicalPath,
+    input.agentDestinations,
+    input.managementSnapshot,
+  ),
 )
