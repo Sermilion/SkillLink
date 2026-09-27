@@ -24,7 +24,7 @@ class DependencyGuardFunctionalTest {
                     |        listOf("implementation", "api", "compileOnly", "runtimeOnly").forEach { name ->
                     |            val edges = configurations.getByName(name).dependencies
                     |                .withType(ProjectDependency::class.java)
-                    |                .map { it.dependencyProject.path }.sorted()
+                    |                .map { it.path }.sorted()
                     |            println("$module:${'$'}name=${'$'}edges")
                     |        }
                     |    }

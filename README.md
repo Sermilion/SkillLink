@@ -2,7 +2,7 @@
 
 Keep one copy of a skill and link it to every agent you use.
 
-SkillLink is a desktop skill manager for Windows, Linux, and macOS, using Kotlin, Gradle, and Compose Desktop, as Skill Bill's former desktop app did. It has a sidebar for managed skills and a main panel for viewing and editing their content.
+SkillLink is a local skill manager for Windows, Linux, and macOS. The first release will use a CLI built on the existing Kotlin/JVM and Gradle foundation. A Compose Desktop interface for browsing and editing managed skills comes later.
 
 See the [product idea](docs/idea.md) for the interface, installation model, usage tracking, delivery stages, and open questions.
 
@@ -11,13 +11,14 @@ See the [product idea](docs/idea.md) for the interface, installation model, usag
 - Explicitly import local skills into SkillLink's installation area, verify the copy, and remove the original after installation commits.
 - Show only skills managed by SkillLink.
 - Manage a shared skill library and global symlinks to Claude, Codex, Junie, and Cursor.
-- Browse and edit skill content.
+- List managed skills, their canonical paths, and per-agent installation state.
 - Detect broken managed links and block installation on case-insensitive name collisions or occupied destinations.
 - Roll back interrupted installations before starting that skill's installation over.
 - Remind users to restart agents after changes.
 
 ## Later
 
+- A desktop interface with a sidebar of managed skills and a main panel for reading and editing.
 - Git sources and update previews.
 - Recorded skill usage by agent and last use in a local SQLite database, where tracking is available.
 - Trash and undo for removed skills.
@@ -28,11 +29,13 @@ Unlinking a skill preserves its source. Usage tracking is optional, and missing 
 ## Development documents
 
 - [Agent instructions](AGENTS.md) list required reading and product constraints.
-- [Architecture](docs/ARCHITECTURE.md) defines hexagonal boundaries, module ownership, installation recovery, persistence, and desktop lifecycle.
+- [Architecture](docs/ARCHITECTURE.md) defines hexagonal boundaries, module ownership, installation recovery, persistence, and CLI and desktop lifecycles.
 - [Code principles](docs/code-principles.md) define Kotlin, Gradle, and test conventions.
 - [Observability policy](docs/observability-policy.md) defines diagnostic and failure-reporting requirements.
+- [CLI installation research](docs/cli-installation-research.md) records integration evidence and open design questions.
+- [Toolchain versions](docs/toolchain-versions.md) records upgrade sources and verification.
 
-The desktop shell opens a two-panel library window. Skill import, editing, agent links, and persistence are not implemented yet.
+The existing desktop shell opens a two-panel library window and remains groundwork for a later release. The CLI, skill import, editing, agent links, and persistence are not implemented yet.
 
 ## Build setup
 
@@ -49,7 +52,7 @@ Use the checked-in wrapper for build work:
 
 On Windows, run the same tasks through `gradlew.bat`. `check` covers all module checks and the included build. Format root and module files with `./gradlew spotlessApply`; format build-logic files with `./gradlew -p build-logic spotlessApply`.
 
-The build uses Gradle 8.10.2, Kotlin 2.0.21, JUnit 5.13.4, Spotless 7.2.1, ktlint 1.5.0, and Detekt 1.23.8. See [implementation notes](.feature-specs/SL-1-gradle-foundation/implementation-notes.md) for compatibility sources, wrapper provenance, and bootstrap details. Configuration cache remains disabled pending validation.
+The build uses Gradle 9.8.0, Kotlin 2.4.20, JUnit 6.1.3, Spotless 8.10.3, ktlint 1.8.0, and Detekt 1.23.8. See [toolchain versions](docs/toolchain-versions.md) for current compatibility sources and wrapper provenance. The SL-1 [implementation notes](.feature-specs/SL-1-gradle-foundation/implementation-notes.md) retain the original bootstrap details. Configuration cache remains disabled pending validation.
 
 ## Continuous integration
 
@@ -57,9 +60,11 @@ The build uses Gradle 8.10.2, Kotlin 2.0.21, JUnit 5.13.4, Spotless 7.2.1, ktlin
 
 The workflow uses pinned action commits and a read-only repository token. Pull requests can read the Gradle cache but cannot update it.
 
-## Desktop and installers
+## Existing desktop shell and installers
 
-Run the shell with `./gradlew :app:run`. Compose Multiplatform 1.7.3 uses the existing Kotlin 2.0.21 compiler plugin and Material 3. Google Maven supplies the AndroidX dependencies required by Compose; other libraries continue to resolve from Maven Central. Spotless and Detekt allow the standard uppercase naming for functions annotated with `@Composable`.
+These tasks build the existing desktop shell; CLI launch and distribution commands will be documented when implemented.
+
+Run the shell with `./gradlew :app:run`. Compose Multiplatform 1.12.1 uses the Kotlin 2.4.20 compiler plugin and Material 3. Google Maven supplies the AndroidX dependencies required by Compose; other libraries continue to resolve from Maven Central. Spotless and Detekt allow the standard uppercase naming for functions annotated with `@Composable`.
 
 Build native installers on the matching operating system with Temurin JDK 21. Compose rejects Homebrew's JDK for macOS packaging; CI installs Temurin with `actions/setup-java`.
 
@@ -75,7 +80,7 @@ Linux packaging needs `rpm` and `fakeroot`. The Windows CI image supplies WiX. I
 
 The repository runner is `skilllink-macmini`, with labels `self-hosted`, `macOS`, `ARM64`, and `skilllink`. It lives at `~/actions-runner-skilllink` on the SSH host `macmini`. Its launchd service starts when the runner user logs in. Manage it with `ssh macmini 'cd ~/actions-runner-skilllink && ./svc.sh status'`, substituting `stop` or `start` as needed. Keep the Mac awake and the runner user logged in for builds. Other projects use separate runner directories and services.
 
-References: [Compose native packaging](https://kotlinlang.org/docs/multiplatform/compose-native-distribution.html), [Compose 1.7.3](https://kotlinlang.org/docs/multiplatform/whats-new-compose-170.html), and [GitHub runner services](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/configure-the-application).
+References: [Compose native packaging](https://kotlinlang.org/docs/multiplatform/compose-native-distribution.html), [Compose compatibility](https://kotlinlang.org/docs/multiplatform/compose-compatibility-and-versioning.html), and [GitHub runner services](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/configure-the-application).
 
 ## Implementation specs
 

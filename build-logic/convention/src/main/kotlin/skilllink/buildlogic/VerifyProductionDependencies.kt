@@ -19,7 +19,7 @@ abstract class VerifyProductionDependencies : DefaultTask() {
         fun inspect(configuration: Configuration) {
             if (!visited.add(configuration.name)) return
             configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
-                val target = dependency.dependencyProject.name
+                val target = dependency.path.substringAfterLast(':')
                 if (target !in allowed) {
                     violations += "$source -> $target through ${configuration.name}"
                 }

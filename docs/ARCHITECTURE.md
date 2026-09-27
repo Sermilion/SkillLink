@@ -1,6 +1,6 @@
 # SkillLink architecture
 
-Status: the five Gradle modules, build checks, Compose desktop shell, and native packaging exist. Application operations and persistence remain planned. The dependency guard checks direct production project dependencies only.
+Status: the five Gradle modules, build checks, Compose desktop shell, and native packaging exist. The CLI is the next delivery target; application operations and persistence remain planned. The dependency guard checks direct production project dependencies only.
 
 Read [the product idea](idea.md) first. [Code principles](code-principles.md) define Kotlin and build conventions. [Observability policy](observability-policy.md) defines failure reporting. These documents adapt Skill Bill's principles to SkillLink's scope and are self-contained.
 
@@ -8,7 +8,7 @@ Read [the product idea](idea.md) first. [Code principles](code-principles.md) de
 
 ### Hexagonal architecture
 
-Domain rules and application use cases form the application core. Desktop interaction drives use cases through typed application APIs. Filesystem, agent integration, and database adapters implement ports owned by the application core. Dependencies point inward.
+Domain rules and application use cases form the application core. CLI commands and later desktop interaction drive use cases through typed application APIs. Filesystem, agent integration, and database adapters implement ports owned by the application core. Dependencies point inward.
 
 The composition root creates adapters and supplies them to application services. Application code never locates dependencies through a global registry. Domain and application code never import Compose, Room, JDBC, concrete adapters, or operating-system filesystem APIs.
 
@@ -40,7 +40,7 @@ Keep serialized keys, versions, and closed wire tokens under one owner. Schema v
 
 ## Target modules and dependency direction
 
-Arrows below show allowed source dependencies. Gradle module names are the intended starting layout.
+Arrows below show the existing allowed source dependencies. The CLI must retain these inward boundaries and `app` as the sole composition root. Its package or module placement will be specified with the CLI implementation; this delivery change does not add a module or dependency edge.
 
 ```mermaid
 flowchart TD
@@ -83,7 +83,7 @@ These are ownership boundaries, not a requirement to create empty packages. Keep
 
 ## Application boundary and ports
 
-The desktop calls named application operations for listing managed skills, reading or saving content, importing a selected skill, enabling or disabling an agent installation, and checking a managed installation's condition.
+The CLI and later desktop call named application operations for listing managed skills, reading or saving content, importing a selected skill, enabling or disabling an agent installation, and checking a managed installation's condition.
 
 Use cases expose typed requests and results. Coroutine APIs may express suspension or observation; Compose types and Room entities may not cross this boundary. Ports accept application values and expose operations needed by their consumers. They do not return connections, DAOs, file handles, or an adapter's entire dependency graph.
 
@@ -160,7 +160,15 @@ Version persisted contracts and test upgrades with real database fixtures. Trans
 
 No cloud storage or analytics backend is required. Activity collection remains separate from local storage and is still research work.
 
-## Desktop state and lifecycle
+## CLI lifecycle
+
+Command handling parses arguments, calls typed application operations, and maps results to terminal output and exit status. It must not implement filesystem, database, import, or rollback policy. A command must run without opening a desktop window.
+
+The process lifetime owns command work and its resources. Before conflicting mutations, acquire writer ownership and complete required recovery. Cancellation before commit requests rollback; interruption after commit leaves the installation committed and any remaining cleanup recoverable on the next invocation.
+
+Report blocked, failed, cleanup-pending, and completed outcomes distinctly. Define command syntax, output contracts, exit codes, and distribution during CLI design.
+
+## Later desktop state and lifecycle
 
 Compose renders immutable screen state and sends user actions to presentation state holders. State holders call application operations and map typed results to user feedback. They do not manipulate links or database entities.
 
@@ -182,11 +190,11 @@ Trash and undo remain optional follow-on work. They require owned-content moves,
 
 ## Build and distribution
 
-Use Kotlin and Gradle with Compose Multiplatform targeting desktop JVM. Share toolchain and test configuration through convention plugins when modules require it. Choose dependency versions during implementation.
+Use Kotlin/JVM and Gradle for the first CLI release. Keep Compose Multiplatform targeting desktop JVM for the later desktop interface. Share toolchain and test configuration through convention plugins when modules require it. Choose dependency versions during implementation.
 
-`app` owns the Compose application entry point and native distribution settings. `desktop` renders the Material 3 library shell and has no IO or application mutations yet. Compose 1.7.3 and the Kotlin 2.0.21 Compose compiler plugin apply only to those two modules. Google Maven supplies their AndroidX dependencies.
+`app` currently owns the Compose application entry point and native distribution settings. `desktop` renders the Material 3 library shell and has no IO or application mutations yet. Compose 1.12.1 and the Kotlin 2.4.20 Compose compiler plugin apply only to those two modules. Google Maven supplies their AndroidX dependencies.
 
-Package DMG for macOS, MSI for Windows, and DEB/RPM for Linux through Compose Desktop native distributions. Build and exercise platform packages on their respective operating systems. Verify that updates preserve `~/.skilllink/` and that uninstall behavior does not silently erase managed skills.
+For the later desktop release, package DMG for macOS, MSI for Windows, and DEB/RPM for Linux through Compose Desktop native distributions. Build and exercise platform packages on their respective operating systems. Verify that updates preserve `~/.skilllink/` and that uninstall behavior does not silently erase managed skills.
 
 Keep build output, generated database code, installers, staging directories, and local user data out of version control. Publish documented build and test commands when tasks exist.
 

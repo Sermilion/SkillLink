@@ -10,15 +10,15 @@ SkillLink is a local skill manager built around that promise. Users add a skill 
 
 The library and its installation controls are the core product. Usage tracking can help users maintain the library as it grows, but SkillLink must remain useful when tracking is unavailable.
 
-SkillLink is a desktop-only application for Windows, Linux, and macOS. Skill installations are global for the current user. The app shows only skills it manages and installs.
+SkillLink starts as a command-line application for Windows, Linux, and macOS. A desktop interface is a later delivery stage. Skill installations are global for the current user. The app shows only skills it manages and installs.
 
 ## Where it came from
 
 Skill Bill began with the idea of installing skills across agents through symlinks. It grew into a framework for skill authoring, orchestration, validation, and runtime workflows. SkillLink gives the original installation idea its own project and room to develop a focused user interface.
 
-The early Skill Bill installer is a reference for this work. Commit `0ee27b14b`, which added Codex support, contains the small installer and agent-linking approach discussed during initial exploration. Any reused implementation needs a fresh compatibility check before becoming part of SkillLink.
+The early Skill Bill installer is a reference for this work. Commit `0ee27b14b`, which added Codex support, contains the small installer and agent-linking approach discussed during initial exploration. Use it to understand the installation model and lessons from agent integration. SkillLink's implementation should follow its own architecture and ownership, conflict, and recovery requirements. Copying historical code is not the objective.
 
-SkillLink starts in a separate repository. Selected pieces of the old installer may be useful, but the new project's scope follows the product described here.
+SkillLink starts in a separate repository. Design its implementation around the product described here, with explicit boundaries between application policy, agent integration, filesystem operations, persistence, and presentation.
 
 ## What users should be able to do
 
@@ -39,7 +39,7 @@ Each managed skill has a canonical source in a SkillLink library. The library li
 
 Agent installations link to that source. Editing the shared content updates what those links point to. Users must restart affected agents to pick up changes. The interface should show a restart reminder after installation or content changes.
 
-Follow Skill Bill's home-directory layout with SkillLink's own namespace: `~/.skilllink/` is the application-owned root, `~/.skilllink/skills/` holds canonical skills, and `~/.skilllink/skilllink.db` holds local data. Resolve `~` through the current user's home directory on Windows, Linux, and macOS. These are SkillLink paths; never reuse or modify `~/.skill-bill/`. Native installers place application binaries according to the platform packaging conventions. Application updates must preserve the managed library because imported originals no longer exist.
+Follow Skill Bill's home-directory layout with SkillLink's own namespace: `~/.skilllink/` is the application-owned root, `~/.skilllink/skills/` holds canonical skills, and `~/.skilllink/skilllink.db` holds local data. Resolve `~` through the current user's home directory on Windows, Linux, and macOS. These are SkillLink paths; never reuse or modify `~/.skill-bill/`. Application binaries remain separate from this mutable user data. Later native installers place binaries according to platform packaging conventions. Application updates must preserve the managed library because imported originals no longer exist.
 
 ### Agent selection
 
@@ -81,6 +81,14 @@ Trash and undo are nice to have, rather than first-release blockers. Retention, 
 
 ## Interface
 
+### CLI first
+
+The first release uses a CLI to import an explicitly selected local skill, list managed skills and their canonical paths, manage per-agent links, and report installation condition. Commands must report conflicts, blocked recovery, pending cleanup, and restart reminders. Unlinking preserves the canonical source.
+
+Command names, arguments, output formats, exit codes, and CLI distribution still need design. An integrated editor is deferred to the desktop stage; users can identify the canonical path to edit with their own tools.
+
+### Later desktop interface
+
 The main window uses two panels. Skill browsing stays visible while the user reads or edits a selected skill.
 
 ### Sidebar
@@ -103,7 +111,7 @@ An edit view changes the shared source. The interface should make it clear that 
 
 Once tracking is available, a small activity section can show recorded uses, which agents used the skill, and when it was last used. Content remains the main focus of the panel.
 
-### Primary flow
+### Shared installation flow
 
 1. Explicitly select a local skill to bring under management.
 2. Choose the agents that should receive it globally.
@@ -111,7 +119,7 @@ Once tracking is available, a small activity section can show recorded uses, whi
 4. Copy the skill into the managed library and verify it while keeping the original recoverable.
 5. Create the managed links, commit installation, remove the original, and show the resulting state. Roll back an interrupted attempt before starting over.
 6. Remind the user to restart affected agents.
-7. Read or edit the shared skill from the main panel.
+7. Identify the canonical path for editing. The later desktop interface provides a main panel for reading and editing.
 
 If a destination conflicts with an existing installation, show the conflict before changing that destination.
 
@@ -169,16 +177,16 @@ The inactivity threshold and exclusion controls remain open. Suggestions should 
 
 ## Delivery stages
 
-### First release: local library and links
+### First release: CLI, local library, and links
 
 The first release should provide:
 
-- A desktop application for Windows, Linux, and macOS.
+- A command-line application for Windows, Linux, and macOS.
 - Explicit import of local skill folders, with verified copying and removal of the original after installation commits.
 - A catalog limited to SkillLink-managed skills.
 - A shared skill library in SkillLink's installation area, independent of agent installations.
 - Global symlink management for Claude, Codex, Junie, and Cursor.
-- The two-panel browsing and editing interface.
+- Listing managed skills, their canonical paths, and their per-agent installation state.
 - Detection of broken managed links and installation blocking on case-insensitive name collisions or destination conflicts.
 - Rollback of interrupted skill installations before a fresh retry, without partial installation artifacts.
 - Disabling an installation while preserving its source.
@@ -186,7 +194,11 @@ The first release should provide:
 
 The first release is useful when a user can manage one skill across multiple agents and always identify its shared source.
 
-### Next: sources and updates
+### Later: desktop interface
+
+Add the two-panel browsing and editing interface using the same application operations and managed library. The existing desktop shell and native packaging remain groundwork for this stage. They are not requirements for shipping the first CLI release.
+
+### Later: sources and updates
 
 Add Git sources and update previews. Users should be able to inspect a proposed update before applying it to the shared copy.
 
@@ -210,14 +222,15 @@ Workflow orchestration, governed feature execution, review pipelines, and runtim
 
 ### Technology direction
 
-Use the stack from Skill Bill's removed desktop app: Kotlin, Gradle, and Compose Multiplatform targeting desktop JVM, with its Material 3 design-system approach. Desktop is the only target; the multiplatform tooling does not imply mobile or web support.
+Use the existing Kotlin/JVM and Gradle foundation for the CLI. Retain Compose Multiplatform targeting desktop JVM and the Material 3 approach for the later desktop interface. Mobile and web are outside the scope.
 
-Use Compose Desktop native distribution packaging with DMG for macOS, MSI for Windows, and DEB and RPM for Linux. The historical desktop database module used Room and SQLite. Exact dependency versions should be selected during implementation rather than copied blindly from historical builds.
+For the later desktop release, use Compose Desktop native distribution packaging with DMG for macOS, MSI for Windows, and DEB and RPM for Linux. The historical desktop database module used Room and SQLite. Exact dependency versions should be selected during implementation rather than copied blindly from historical builds.
 
 The historical reference is the parent of removal commit `211941b7a`. It contains `runtime-kotlin/runtime-desktop/build.gradle.kts`, the desktop core and feature modules, and the supporting Gradle convention plugins. Use these as stack and packaging references while keeping SkillLink's smaller product scope.
 
 ## Open questions
 
+- What command syntax, output formats, exit codes, and distribution should the CLI provide?
 - What evidence can each agent provide for usage tracking, and what counts as a use?
 - Which collection controls and retention policy should local activity data use?
 - How long should trash retain skills, and how should permanent deletion and conflicting restores work?

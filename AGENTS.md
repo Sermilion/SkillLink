@@ -6,7 +6,7 @@ Read [docs/idea.md](docs/idea.md) before planning, designing, implementing, or r
 
 Before designing, implementing, or reviewing code, also read:
 
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) for hexagonal boundaries, the target module graph, ownership, persistence, installation recovery, and desktop lifecycle.
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) for hexagonal boundaries, the target module graph, ownership, persistence, installation recovery, and CLI and desktop lifecycles.
 - [docs/code-principles.md](docs/code-principles.md) for Kotlin patterns, package and file limits, comments, imports, tests, and build conventions.
 - [docs/observability-policy.md](docs/observability-policy.md) for failure reporting, diagnostics, recovery evidence, and activity-data boundaries.
 
@@ -14,9 +14,9 @@ These documents own their respective rules. This file is the entry point and pro
 
 ## Project context
 
-SkillLink manages one canonical copy of a skill and installs it into selected agents through symlinks. It is a desktop-only application for Windows, Linux, and macOS, using the Kotlin/JVM and Gradle foundation used by Skill Bill.
+SkillLink manages one canonical copy of a skill and installs it into selected agents through symlinks. It starts as a CLI for Windows, Linux, and macOS, using the Kotlin/JVM and Gradle foundation used by Skill Bill.
 
-The UI has a sidebar of managed skills and a main panel for viewing and editing the selected skill. Use Compose Multiplatform for desktop JVM and the Material 3 approach from Skill Bill's removed desktop app. Package DMG, MSI, DEB, and RPM installers. Use local SQLite storage, with the historical desktop Room integration as the persistence reference. Do not treat an implementation proposal as an accepted product decision.
+The first release focuses on CLI import, managed-skill listing, canonical paths, per-agent links, and installation status. Command syntax and CLI distribution still need design. The later desktop UI has a sidebar of managed skills and a main panel for viewing and editing the selected skill. Use Compose Multiplatform for desktop JVM and the Material 3 approach from Skill Bill's removed desktop app. Package DMG, MSI, DEB, and RPM installers for that later desktop release. Use local SQLite storage, with the historical desktop Room integration as the persistence reference. Do not treat an implementation proposal as an accepted product decision.
 
 Skill Bill's architecture principles inform this project. Its workflow engine, platform packs, skill-generation contracts, and orchestration machinery are not SkillLink requirements. This repository's instructions must work without a sibling Skill Bill checkout.
 
@@ -36,10 +36,10 @@ Skill Bill's architecture principles inform this project. Its workflow engine, p
 
 ## Architecture requirements
 
-Follow [the architecture](docs/ARCHITECTURE.md), including its design principles and dependency graph. The target modules are `domain`, `application`, `infrastructure`, `desktop`, and `app`. The modules exist; `app` owns the desktop entry point and packaging, and `desktop` owns the initial library shell.
+Follow [the architecture](docs/ARCHITECTURE.md), including its design principles and dependency graph. The target modules are `domain`, `application`, `infrastructure`, `desktop`, and `app`. The modules exist; `app` currently owns the desktop entry point and packaging, and `desktop` owns the initial library shell. CLI implementation comes next; retain `app` as the sole composition root and keep command handling separate from business rules.
 
 - Domain rules have no UI or IO dependencies. Application use cases own policy and ports; adapters implement those ports.
-- `app` is the sole composition root. Desktop code calls application operations and never manipulates files, links, or database entities directly.
+- `app` is the sole composition root. CLI and desktop code call application operations and never manipulate files, links, or database entities directly.
 - Give each operation one state owner and each acquired resource one cleanup owner. Preserve cancellation and the primary failure.
 - Keep filesystem mutation distinct from database commitment. Record ownership before mutations; roll back uncommitted attempts and finish cleanup for committed ones.
 - Keep agent and operating-system behavior in adapters. Do not duplicate it across use cases or UI components.
