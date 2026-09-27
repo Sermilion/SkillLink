@@ -87,7 +87,6 @@ internal fun Path.gradleRunner(
             .create()
             .withProjectDir(toFile())
             .withGradleVersion(version)
-            .withTestKitDir(resolve("testkit-home").toFile())
             .withArguments(*arguments, "--stacktrace", "--max-workers=2", "--no-parallel", "--no-configuration-cache")
     return if (injectPlugins) runner.withPluginClasspath() else runner
 }

@@ -13,10 +13,8 @@ class DependencyGuardFunctionalTest {
 
     @Test
     fun acceptsSpecifiedGraph() {
-        projectDir.prepareFixture()
-        projectDir.includeModules(*productionModules.toTypedArray())
+        projectDir.prepareRepositoryFixture()
         productionModules.forEach { module ->
-            projectDir.copyRepositoryFile("$module/build.gradle.kts")
             val script = projectDir.resolve("$module/build.gradle.kts").toFile()
             script.writeText("import org.gradle.api.artifacts.ProjectDependency\n\n" + script.readText())
             script.appendText(
@@ -37,9 +35,11 @@ class DependencyGuardFunctionalTest {
         }
 
         val result =
-            projectDir.runGradle(
-                *productionModules.map { ":$it:verifyProductionDependencies" }.toTypedArray(),
-            )
+            projectDir
+                .gradleRunner(
+                    *productionModules.map { ":$it:verifyProductionDependencies" }.toTypedArray(),
+                    injectPlugins = false,
+                ).build()
 
         productionModules.forEach {
             result.assertOutcome(":$it:verifyProductionDependencies", TaskOutcome.SUCCESS)

@@ -20,13 +20,13 @@ These requirements have inspection evidence rather than dedicated regression tes
 - Wrapper launchers, JAR, executable permission, distribution checksum, JDK instructions, and catalog version ownership.
 - Lazy task registration and configuration, settings-owned repositories, and the absence of filesystem capability probes.
 - Generated-output and IDE ignore patterns, wrapper and schema-export retention, and preservation of existing user files.
-- Documentation accuracy and the absence of application behavior, packaging, Skill Bill dependencies, and user-data access.
+- Documentation accuracy, shell-only application behavior, native packaging configuration, and the absence of Skill Bill dependencies and user-data access.
 
 ## Review-only requirements
 
 - Domain and application code must not depend on UI, filesystem, SQL, or operating-system APIs.
 - Source imports, Kotlin comments, inline fully qualified names, package/file ceilings, and wire-key ownership are not scanned.
 - Installation recovery, cancellation, transaction ownership, privacy, and observability are not implemented or mechanically checked by this foundation.
-- No task proves Windows or macOS wrapper behavior or a runnable application. Standalone wrapper execution and platform results require the later validation evidence described in the implementation notes.
+- CI builds MSI, DEB/RPM, and DMG installers on their target operating systems. Packaging success does not verify interactive UI behavior or installation into a user's environment.
 
 The dependency guard covers direct production project declarations on compile and runtime classpath configuration hierarchies. It does not reject allowed transitive reachability, inspect external modules, or enforce the full hexagonal architecture.

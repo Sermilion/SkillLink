@@ -17,3 +17,7 @@ style:
     active: true
     excludes: []
     excludeImports: []
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']

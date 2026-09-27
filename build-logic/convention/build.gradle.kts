@@ -57,6 +57,16 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 tasks.withType<Test>().configureEach {
+    inputs
+        .files(
+            fileTree("../..") {
+                include("**/*.gradle.kts")
+                include("gradle/libs.versions.toml", "gradle/wrapper/gradle-wrapper.properties")
+                include("config/detekt/detekt.yml")
+                include("build-logic/convention/src/main/**/*.kt")
+                exclude("**/build/**", "**/.gradle/**")
+            },
+        ).withPropertyName("fixtureSources")
     useJUnitPlatform()
     maxParallelForks = 1
     testLogging {

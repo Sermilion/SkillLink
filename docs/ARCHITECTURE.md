@@ -1,6 +1,6 @@
 # SkillLink architecture
 
-Status: target application architecture. The five Gradle modules and build checks exist, but they contain no application implementation yet. The dependency guard checks direct production project dependencies only.
+Status: the five Gradle modules, build checks, Compose desktop shell, and native packaging exist. Application operations and persistence remain planned. The dependency guard checks direct production project dependencies only.
 
 Read [the product idea](idea.md) first. [Code principles](code-principles.md) define Kotlin and build conventions. [Observability policy](observability-policy.md) defines failure reporting. These documents adapt Skill Bill's principles to SkillLink's scope and are self-contained.
 
@@ -183,6 +183,8 @@ Trash and undo remain optional follow-on work. They require owned-content moves,
 ## Build and distribution
 
 Use Kotlin and Gradle with Compose Multiplatform targeting desktop JVM. Share toolchain and test configuration through convention plugins when modules require it. Choose dependency versions during implementation.
+
+`app` owns the Compose application entry point and native distribution settings. `desktop` renders the Material 3 library shell and has no IO or application mutations yet. Compose 1.7.3 and the Kotlin 2.0.21 Compose compiler plugin apply only to those two modules. Google Maven supplies their AndroidX dependencies.
 
 Package DMG for macOS, MSI for Windows, and DEB/RPM for Linux through Compose Desktop native distributions. Build and exercise platform packages on their respective operating systems. Verify that updates preserve `~/.skilllink/` and that uninstall behavior does not silently erase managed skills.
 
