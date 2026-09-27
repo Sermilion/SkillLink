@@ -26,14 +26,14 @@ jobs:
       matrix:
         include:
           - platform: linux-x64
-            os: ubuntu-24.04
+            runner: ubuntu-24.04
           - platform: macos-arm64
-            os: macos-14
+            runner: [self-hosted, macOS, ARM64, skilllink]
           - platform: macos-x64
-            os: macos-13
+            runner: [self-hosted, macOS, ARM64, skilllink]
           - platform: windows-x64
-            os: windows-2022
-    runs-on: ${{ matrix.os }}
+            runner: windows-2022
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:
       - name: Check out source
