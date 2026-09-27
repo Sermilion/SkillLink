@@ -1,0 +1,19 @@
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: true
+
+comments:
+  active: true
+  UndocumentedPublicClass:
+    active: false
+
+style:
+  MagicNumber:
+    active: true
+  WildcardImport:
+    active: true
+    excludes: []
+    excludeImports: []

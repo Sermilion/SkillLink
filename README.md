@@ -32,8 +32,26 @@ Unlinking a skill preserves its source. Usage tracking is optional, and missing 
 - [Code principles](docs/code-principles.md) define Kotlin, Gradle, and test conventions.
 - [Observability policy](docs/observability-policy.md) defines diagnostic and failure-reporting requirements.
 
-The architecture describes the target implementation. Application modules and automated guards have not been created yet.
+The Gradle foundation is in place. The five modules are empty boundaries, and the repository has no runnable desktop application yet.
+
+## Build setup
+
+Install JDK 21 and set `JAVA_HOME` to that JDK. The wrapper starts Gradle from the repository and the JVM convention selects a local JDK 21 toolchain. The build does not install a missing JDK.
+
+Use the checked-in wrapper for build work:
+
+```sh
+./gradlew projects
+./gradlew check
+./gradlew build
+./gradlew -p build-logic check
+```
+
+On Windows, run the same tasks through `gradlew.bat`. `check` covers all module checks and the included build. Format root and module files with `./gradlew spotlessApply`; format build-logic files with `./gradlew -p build-logic spotlessApply`.
+
+The build uses Gradle 8.10.2, Kotlin 2.0.21, JUnit 5.13.4, Spotless 7.2.1, ktlint 1.5.0, and Detekt 1.23.8. See [implementation notes](.feature-specs/SL-1-gradle-foundation/implementation-notes.md) for compatibility sources, wrapper provenance, and bootstrap details. Configuration cache remains disabled pending validation.
 
 ## Implementation specs
 
-- [SL-1: Gradle project and build conventions](.feature-specs/SL-1-gradle-foundation/spec.md) defines the initial build-logic, module builds, and verification requirements. Implementation is pending.
+- [SL-1: Gradle project and build conventions](.feature-specs/SL-1-gradle-foundation/spec.md) defines the build-logic, module builds, and verification requirements.
+- [Principle enforcement inventory](docs/PrincipleEnforcementInventory.md) maps implemented checks to their proving fixtures and separates review-only rules.

@@ -58,7 +58,7 @@ Run checks appropriate to the change. Document canonical build and verification 
 
 ## Enforcement status
 
-The repository currently has documentation and no implemented build or architecture guards. The architecture describes the target; its rules apply in review now.
+The Gradle foundation enforces JVM conventions, quality checks, and direct production project-dependency rules. It does not scan source imports, comments, wire keys, or package and file limits. The architecture describes the target; unenforced rules still apply in review.
 
 As guards are added, maintain one inventory pairing each mechanically enforced rule with its proving test. Keep review-only requirements separate. Never expand exemptions, suppressions, or baselines to accommodate a new violation.
 

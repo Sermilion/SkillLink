@@ -1,6 +1,6 @@
 # SkillLink architecture
 
-Status: target architecture for implementation. The repository currently contains documentation; the modules and checks below do not exist yet.
+Status: target application architecture. The five Gradle modules and build checks exist, but they contain no application implementation yet. The dependency guard checks direct production project dependencies only.
 
 Read [the product idea](idea.md) first. [Code principles](code-principles.md) define Kotlin and build conventions. [Observability policy](observability-policy.md) defines failure reporting. These documents adapt Skill Bill's principles to SkillLink's scope and are self-contained.
 
@@ -194,7 +194,7 @@ Every test should name the realistic regression it catches. Prioritize real file
 
 Required evidence includes case-insensitive collision rejection, preservation of originals after failed copying, rollback after partial linking, cleanup after committed import, rejection of replaced destinations, and unchanged unrelated skills. UI tests protect interaction and lifecycle behavior rather than screenshots of incidental layout.
 
-No automated architecture guards exist yet. At implementation, maintain one `PrincipleEnforcementInventory` pairing each enforced rule with its proving test. Keep review-only requirements separate. Planned guards should check module dependencies, forbidden framework imports, Kotlin comments, inline qualified names, package/file limits, and governed wire-key ownership.
+The [Principle Enforcement Inventory](PrincipleEnforcementInventory.md) pairs implemented checks with their proving fixtures and lists review-only rules separately. The dependency guard checks direct project declarations on production compile and runtime classpaths. It does not inspect framework imports, Kotlin comments, inline qualified names, package/file limits, or wire-key ownership.
 
 Source scans must test both allowed and rejected inputs, including newly introduced undeclared keys. They must not claim coverage outside their configured source boundaries. Never grow exemptions or baselines to make new violations pass.
 

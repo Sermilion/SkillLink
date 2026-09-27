@@ -1,6 +1,6 @@
 # Code principles
 
-Read [the architecture](ARCHITECTURE.md) before changing code. This document owns Kotlin patterns, package limits, comments, and build conventions. These requirements apply during review now; automated guards have not been implemented.
+Read [the architecture](ARCHITECTURE.md) before changing code. This document owns Kotlin patterns, package limits, comments, and build conventions. The [enforcement inventory](PrincipleEnforcementInventory.md) identifies implemented checks; listed review-only requirements still apply during review.
 
 ## Type modeling
 
@@ -52,7 +52,7 @@ Production non-model packages may contain at most 12 sibling Kotlin files. Area-
 
 These ceilings are upper bounds. Split by responsibility and preserve related behavior. Do not hide dependencies in context objects or create arbitrary numbered files to satisfy limits.
 
-When mechanical enforcement lands, its inventory owns the numeric constants and verifies these documented limits. Do not maintain conflicting test-local copies.
+If mechanical enforcement is added, its inventory owns the numeric constants and verifies these documented limits. Do not maintain conflicting test-local copies.
 
 ## Imports and names
 
