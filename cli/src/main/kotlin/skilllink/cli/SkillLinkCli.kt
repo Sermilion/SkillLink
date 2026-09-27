@@ -50,12 +50,18 @@ class SkillLinkCli(
           }
 
           is CliCommand.Install -> {
+            val agents =
+              command.agents.ifEmpty {
+                promptForAgents() ?: return CliRenderer.renderParseFailure(
+                  CliParseOutcome.Failed.InvalidArguments,
+                )
+              }
             try {
               CliRenderer.renderInstall(
                 installOperationProvider().execute(
                   InstallSkillRequest.NewImport(
                     skillFile = command.skillFile,
-                    agents = command.agents,
+                    agents = agents,
                   ),
                 ),
               )
@@ -77,6 +83,60 @@ class SkillLinkCli(
           }
         }
       }
+    }
+
+  private fun promptForAgents(): Set<AgentId>? {
+    val supported = AgentId.entries
+    println("Select agents to install for (comma-separated):")
+    supported.forEachIndexed { index, agent ->
+      println("  ${index + 1}. ${agent.wireValue}")
+    }
+    println("  ${supported.size + 1}. all")
+    print("▸ Agents: ")
+    val input =
+      try {
+        readlnOrNull()?.trim().orEmpty()
+      } catch (_: Exception) {
+        ""
+      }
+    if (input.isEmpty()) return null
+    return parseAgentInput(input, supported)
+  }
+
+  private fun parseAgentInput(
+    input: String,
+    supported: List<AgentId>,
+  ): Set<AgentId>? {
+    val allAgents = supported.toSet()
+    val selected = linkedSetOf<AgentId>()
+    var failed = false
+    for (token in input.split(",")) {
+      val trimmed = token.trim()
+      if (trimmed.isEmpty()) continue
+      val resolved = resolveAgentToken(trimmed, trimmed.toIntOrNull(), supported)
+      if (resolved == null) {
+        System.err.println("Unknown agent: $trimmed")
+        failed = true
+      } else if (resolved.size == allAgents.size) {
+        selected.addAll(allAgents)
+      } else {
+        selected.addAll(resolved)
+      }
+    }
+    if (failed) return null
+    return selected.ifEmpty { null }
+  }
+
+  private fun resolveAgentToken(
+    token: String,
+    asNumber: Int?,
+    supported: List<AgentId>,
+  ): Set<AgentId>? =
+    when {
+      asNumber == supported.size + 1 -> supported.toSet()
+      asNumber != null && asNumber in 1..supported.size -> setOf(supported[asNumber - 1])
+      token.equals("all", ignoreCase = true) -> supported.toSet()
+      else -> AgentId.fromWire(token.lowercase())?.let { setOf(it) }
     }
 
   private enum class ManagementAction {

@@ -55,7 +55,12 @@ object CliArgumentParser {
 
           is AgentParseOutcome.Parsed -> {
             if (agents.agents.isEmpty()) {
-              CliParseOutcome.Failed.InvalidArguments
+              CliParseOutcome.Parsed(
+                CliCommand.Install(
+                  workingDirectory.resolve(tokens[1]).normalize(),
+                  emptySet(),
+                ),
+              )
             } else {
               CliParseOutcome.Parsed(
                 CliCommand.Install(

@@ -51,9 +51,11 @@ class CliArgumentParserTest {
   }
 
   @Test
-  fun rejectsMissingAgentSelection() {
+  fun parsesInstallWithoutAgentsForInteractivePrompt() {
     val outcome = CliArgumentParser.parse(arrayOf("install", "x/SKILL.md"), workingDirectory)
-    assertTrue(outcome is CliParseOutcome.Failed.InvalidArguments)
+    assertTrue(outcome is CliParseOutcome.Parsed)
+    val command = (outcome as CliParseOutcome.Parsed).command as CliCommand.Install
+    assertTrue(command.agents.isEmpty())
   }
 
   @Test
