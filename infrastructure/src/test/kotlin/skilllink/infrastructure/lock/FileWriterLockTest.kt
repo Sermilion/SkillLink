@@ -32,7 +32,12 @@ class FileWriterLockTest {
         System.getProperty("java.class.path"),
         WriterLockChild::class.java.name,
         lockPath.toString(),
-      ).redirectErrorStream(true).start()
+      ).apply {
+        environment().merge("JAVA_TOOL_OPTIONS", "-Dskilllink.writerLock.test=true") { existing, required ->
+          "$existing $required"
+        }
+      }.redirectError(ProcessBuilder.Redirect.INHERIT)
+        .start()
     try {
       assertEquals("READY", process.inputStream.bufferedReader().readLine())
       assertTrue(FileWriterLock(lockPath).tryAcquire() is WriterLockOutcome.Busy)
