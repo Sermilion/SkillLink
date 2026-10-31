@@ -40,6 +40,8 @@ skill-link list
 
 The original source is preserved by default. Add `--remove-original` only when source removal is explicitly intended and confirmed.
 
+`SKILL.md` must start with YAML frontmatter between `---` lines and contain nonempty string `name` and `description` fields. Descriptions can span lines or use folded and literal blocks. Nested metadata and lists are supported, and import preserves the original bytes. Duplicate mapping keys, explicit YAML tags, anchors, aliases, and merge keys are rejected. Frontmatter is limited to 65,536 characters and 64 nesting levels. Invalid frontmatter reports a reason and exits with code 2.
+
 ## What it does
 
 - Explicitly import local skills into SkillLink's installation area and verify the copy.

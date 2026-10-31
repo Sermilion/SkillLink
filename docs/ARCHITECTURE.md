@@ -109,6 +109,8 @@ The catalog is the entry point for browsing. Scanning agent directories or unrel
 
 Keep stable skill identity separate from display spelling. Name comparison is case-insensitive and locale-independent on every supported operating system. One domain operation computes the comparison key; database uniqueness, import, and restore use that same rule. Pin Unicode normalization and case-folding behavior before implementing the name contract, with examples beyond ASCII. Do not delegate comparison to filesystem behavior or SQLite's default collation.
 
+Frontmatter parsing stays in the domain as a pure transformation of supplied text. SnakeYAML Engine parses YAML events and nodes without constructing application objects. SkillLink checks bounded header length and nesting, rejects tags, anchors, aliases, merge keys, and duplicate mapping keys, and extracts only top-level scalar `name` and `description` fields. Scalars remain text without implicit boolean or numeric conversion, so unquoted numeric skill names keep working. Filesystem adapters preserve source bytes and pass typed validation failures through the application to presentation.
+
 Validate names as single safe path components. Reject traversal, absolute paths, separators, and names the supported platforms cannot represent. Names do not grant filesystem authority.
 
 Claude, Codex, Junie, and Cursor are the first supported agents. Resolve their global paths and supported overrides inside agent adapters, using Skill Bill's installation behavior as the reference. Reproduce the necessary behavior locally; do not require a Skill Bill installation at runtime.

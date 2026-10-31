@@ -32,6 +32,7 @@ internal fun runInstallAttempt(
       SourceInspectionOutcome.Invalid.NotSkillFile
     }
   return when (inspected) {
+    is SourceInspectionOutcome.Invalid.Frontmatter -> InstallSkillOutcome.Failed.InvalidFrontmatter(inspected.reason)
     is SourceInspectionOutcome.Invalid -> InstallSkillOutcome.Failed.SourceInvalid
     is SourceInspectionOutcome.Valid -> prepareInstall(operation, import, inspected)
   }

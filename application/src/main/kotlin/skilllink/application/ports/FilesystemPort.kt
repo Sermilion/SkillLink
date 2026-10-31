@@ -2,6 +2,7 @@ package skilllink.application.ports
 
 import skilllink.application.installation.model.ObservedLinkCondition
 import skilllink.domain.agent.AgentId
+import skilllink.domain.source.FrontmatterOutcome
 import java.nio.file.Path
 
 sealed interface CopyBundleOutcome {
@@ -57,7 +58,9 @@ sealed interface SourceInspectionOutcome {
   sealed interface Invalid : SourceInspectionOutcome {
     data object NotSkillFile : Invalid
 
-    data object Frontmatter : Invalid
+    data class Frontmatter(
+      val reason: FrontmatterOutcome.Rejected,
+    ) : Invalid
 
     data object NamePolicy : Invalid
 

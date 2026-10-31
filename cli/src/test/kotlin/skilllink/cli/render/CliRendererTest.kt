@@ -16,9 +16,23 @@ import skilllink.cli.exit.CliExitCodes
 import skilllink.domain.agent.AgentId
 import skilllink.domain.library.NameComparisonKey
 import skilllink.domain.library.SkillId
+import skilllink.domain.source.FrontmatterOutcome
 import java.nio.file.Path
 
 class CliRendererTest {
+  @Test
+  fun explainsTheInvalidFrontmatterFieldWithTheExistingInvalidArgumentsExitCode() {
+    val rendered =
+      CliRenderer.renderInstall(
+        InstallSkillOutcome.Failed.InvalidFrontmatter(FrontmatterOutcome.Rejected.DuplicateDescription),
+      )
+
+    assertEquals(CliExitCodes.INVALID_ARGUMENTS, rendered.exitCode)
+    assertTrue(rendered.stdout.isEmpty())
+    assertTrue(rendered.stderr.contains("description"))
+    assertTrue(rendered.stderr.contains("one top-level"))
+  }
+
   @Test
   fun mapsConflictFailuresToExitCodeFour() {
     val rendered = CliRenderer.renderInstall(InstallSkillOutcome.Failed.NameConflict)

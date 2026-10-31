@@ -178,6 +178,10 @@ private fun renderInstallFailure(outcome: InstallSkillOutcome.Failed): RenderedC
       failure(CliExitCodes.INVALID_ARGUMENTS, "Invalid install arguments.")
     }
 
+    is InstallSkillOutcome.Failed.InvalidFrontmatter -> {
+      failure(CliExitCodes.INVALID_ARGUMENTS, renderFrontmatterFailure(outcome.reason))
+    }
+
     InstallSkillOutcome.Failed.SourceInvalid -> {
       failure(CliExitCodes.INVALID_ARGUMENTS, "Invalid skill source.")
     }

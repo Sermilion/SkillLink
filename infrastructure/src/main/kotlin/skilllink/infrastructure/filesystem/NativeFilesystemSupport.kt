@@ -221,12 +221,12 @@ private object NativeFilesystemInspectionSupport {
     skillFile: Path,
   ): SourceInspectionOutcome {
     val content = runCatching { Files.readString(skillFile) }.getOrNull()
-    val frontmatter = content?.let(FrontmatterReader::parse)
-    return when {
-      frontmatter !is FrontmatterOutcome.Parsed -> {
-        SourceInspectionOutcome.Invalid.Frontmatter
+    val frontmatter =
+      when (val parsed = content?.let(FrontmatterReader::parse) ?: FrontmatterOutcome.Rejected.Malformed) {
+        is FrontmatterOutcome.Parsed -> parsed
+        is FrontmatterOutcome.Rejected -> return SourceInspectionOutcome.Invalid.Frontmatter(parsed)
       }
-
+    return when {
       SkillNamePolicy.validate(frontmatter.name) is SkillNameOutcome.Rejected -> {
         SourceInspectionOutcome.Invalid.NamePolicy
       }

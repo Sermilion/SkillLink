@@ -13,6 +13,7 @@ import skilllink.application.installation.model.InstallSkillOutcome
 import skilllink.application.installation.model.InstallSkillRequest
 import skilllink.application.library.ListManagedSkillsOperation
 import skilllink.domain.agent.AgentId
+import skilllink.domain.source.FrontmatterOutcome
 import skilllink.infrastructure.agent.DefaultAgentRegistry
 import skilllink.infrastructure.agent.LinkCapabilityProbe
 import skilllink.infrastructure.diagnostics.FileDiagnostics
@@ -119,6 +120,77 @@ class InstallSkillOperationTest {
     assertEquals(InstallSkillOutcome.Failed.DestinationConflict, outcome)
     assertTrue(Files.exists(source))
     assertTrue(Files.exists(destination.resolve("foreign.txt")))
+  }
+
+  @Test
+  fun importsMultilineYamlWithoutChangingSourceOrCanonicalBytes() {
+    assumeTrue(LinkCapabilityProbe.current() is skilllink.application.ports.LinkCapability.DirectSymlink)
+    val source = createBundle("appfunctions", "reference")
+    val skillFile = source.resolve("SKILL.md")
+    val content =
+      """
+      ---
+      name: appfunctions
+      description: Exposes Android workflows
+        to AI agents.
+      metadata:
+        author: Google LLC
+        keywords:
+        - AppFunctions
+        - Kotlin
+      ---
+      Original instructions.
+      """.trimIndent()
+    Files.writeString(skillFile, content)
+    val fixture = fixture()
+
+    val outcome = fixture.operation.execute(InstallSkillRequest.NewImport(skillFile, setOf(AgentId.Claude)))
+
+    assertTrue(outcome is InstallSkillOutcome.Completed)
+    assertEquals(content, Files.readString(skillFile))
+    val canonical =
+      fixture.layout
+        .resolve()
+        .skillsRoot
+        .resolve("appfunctions")
+    assertEquals(content, Files.readString(canonical.resolve("SKILL.md")))
+    assertEquals("reference", Files.readString(canonical.resolve("nested.txt")))
+    val link =
+      fixture.registry
+        .destinationFor(AgentId.Claude)
+        .root
+        .resolve("appfunctions")
+    assertEquals(canonical, Files.readSymbolicLink(link))
+    assertEquals(listOf("appfunctions"), fixture.store.listActiveOrdered().map { it.displayName })
+  }
+
+  @Test
+  fun preservesSpecificFrontmatterRejectionWithoutChangingTheSourceOrCatalog() {
+    val source = createBundle("demo", "payload")
+    val skillFile = source.resolve("SKILL.md")
+    val content = "---\nname: demo\ndescription: one\ndescription: two\n---\n"
+    Files.writeString(skillFile, content)
+    val fixture = fixture()
+
+    val outcome =
+      fixture.operation.execute(
+        InstallSkillRequest.NewImport(skillFile, setOf(AgentId.Claude), removeOriginal = true),
+      )
+
+    assertEquals(
+      InstallSkillOutcome.Failed.InvalidFrontmatter(FrontmatterOutcome.Rejected.DuplicateDescription),
+      outcome,
+    )
+    assertEquals(content, Files.readString(skillFile))
+    assertTrue(fixture.store.listActiveOrdered().isEmpty())
+    assertFalse(
+      Files.exists(
+        fixture.registry
+          .destinationFor(AgentId.Claude)
+          .root
+          .resolve("demo"),
+      ),
+    )
   }
 
   private fun createBundle(

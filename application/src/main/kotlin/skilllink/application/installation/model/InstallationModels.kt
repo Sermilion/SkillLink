@@ -3,6 +3,7 @@ package skilllink.application.installation.model
 import skilllink.domain.agent.AgentId
 import skilllink.domain.library.NameComparisonKey
 import skilllink.domain.library.SkillId
+import skilllink.domain.source.FrontmatterOutcome
 import java.nio.file.Path
 
 enum class DesiredInstallationState {
@@ -56,6 +57,10 @@ sealed interface InstallSkillOutcome {
     data object DestinationConflict : Failed
 
     data object SourceInvalid : Failed
+
+    data class InvalidFrontmatter(
+      val reason: FrontmatterOutcome.Rejected,
+    ) : Failed
 
     data object WriterBusy : Failed
 
